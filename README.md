@@ -19,13 +19,13 @@ A abertura direta de index.html permite visualizar as telas, mas o comportamento
 1. Administração exibe Cadastros, Financeiro, Liberação e Auditoria, Avaliação Física e Relatórios. Portaria exibe somente o terminal da catraca. Use Área de trabalho para alternar entre essas telas.
 2. Em Cadastros, use Novo aluno ou abra um registro existente. Nome, CPF válido, dados de contato e informações de saúde são obrigatórios. Matrícula é gerada automaticamente; fotos JPEG/PNG/WebP podem ter até 1 MB. Salvar cria ou edita somente o aluno: não cria contrato nem cobrança e não altera os registros financeiros existentes.
 3. Em Financeiro, selecione um aluno para consultar ou cadastrar seu contrato/pagamento. Um aluno novo fica sem contrato até salvar nessa tela. Plano, vigência, pagamento, situação contratual e suspensão/reativação são administrados exclusivamente aqui. A prévia mantém uma cobrança por contrato, e os indicadores vêm desses registros.
-4. Na Catraca, experimente as matrículas 1111, 2222 e 3333: os exemplos iniciais representam plano em dia, tolerância e atraso. Alterações nos demais módulos podem mudar esses resultados.
+4. A demonstração começa sem alunos cadastrados. Cadastre um aluno em Gestão de Cadastros e depois registre contrato e cobrança em Financeiro para experimentar os fluxos de catraca e relatórios.
 5. Liberação e Auditoria registra autorizações fictícias com justificativa, responsável e prazo. Autorizações de entrada/temporárias permitem um acesso e são consumidas pela catraca. Área restrita é registrada separadamente.
 6. Avaliação Física registra peso, altura, gordura, objetivo e reavaliação; o histórico pode ser filtrado por aluno.
 7. Relatórios mostra alunos com acessos liberados no período. A situação do contrato é a atual, e não a situação histórica na data de cada acesso.
 8. A restauração é uma ferramenta de apoio aos testes e não aparece na interface. No console do navegador, na página principal, execute Demo.reset() e recarregue a página. Isso substitui os registros locais pelos exemplos iniciais; use somente quando puder descartar os dados adicionados.
 
-Use apenas dados fictícios. Os dados da prévia são guardados no navegador quando o armazenamento está disponível. Quando ele é bloqueado, a prévia mantém estado em memória; esse estado pode se perder ao recarregar. A restauração afeta somente esta demonstração.
+Use apenas dados fictícios. A demonstração começa sem registros pessoais; novos dados são guardados no navegador quando o armazenamento está disponível. Quando ele é bloqueado, a prévia mantém estado em memória; esse estado pode se perder ao recarregar. A restauração limpa os registros e volta ao estado vazio.
 
 ## Regras demonstrativas
 
