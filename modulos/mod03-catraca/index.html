@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Controle de Catraca • Vida Ativa</title><link rel="stylesheet" href="style.css"></head><body>
+<main class="module"><a class="back-link" href="../../index.html">← Voltar à navegação</a><header class="module-header"><div><p class="eyebrow">Academia Vida Ativa</p><h1>Controle de Catraca</h1><p class="subtitle">Valide a matrícula e acompanhe o acesso dos alunos à academia.</p></div></header>
+
+<div class="split"><section class="card"><h2>Identificação do aluno</h2><form id="formCatraca">
+<div class="field"><label for="matricula">Matrícula / código *</label><input id="matricula" name="matricula" type="text" required pattern="[0-9]{4,12}" minlength="4" maxlength="12" inputmode="numeric" autocomplete="off" placeholder="Ex.: 1111" aria-describedby="matricula-hint"><p class="hint" id="matricula-hint">Informe de 4 a 12 números.</p></div>
+<div class="actions"><button type="reset" class="btn">Limpar terminal</button><button type="submit" class="btn btn-primary" id="btn-validar">Validar acesso</button></div><p id="feedback" class="feedback" role="status" aria-live="polite"></p></form>
+<div class="divider"></div><h3>Acesso rápido</h3><p class="hint">Selecione um aluno para validar seu acesso.</p><div class="actions" id="exemplos"></div><p class="clock" id="clock" aria-live="off"></p></section>
+<section class="card"><h2>Status do acesso</h2><div class="status-panel" id="status-banner" role="status" aria-live="polite" aria-atomic="true"><p class="status-title" id="status-title">Aguardando matrícula</p><p class="muted" id="status-sub">O resultado da validação aparecerá aqui.</p></div>
+<div class="student-card" id="student-card" hidden><div class="avatar" id="avatar"></div><div class="student-details"><div class="student-name" id="student-name"></div><p class="student-meta" id="student-mat"></p><p class="student-meta" id="student-plan"></p><p class="student-meta" id="student-due"></p><span id="student-status"></span></div></div></section></div>
+<section class="card space-top"><div class="card-heading"><h2>Histórico de acessos</h2><span class="muted" id="log-count" aria-live="polite" role="status"></span></div><div class="table-wrap"><table><caption>Últimos 10 acessos registrados</caption><thead><tr><th scope="col">Data e hora</th><th scope="col">Matrícula</th><th scope="col">Aluno</th><th scope="col">Resultado</th></tr></thead><tbody id="log-body"></tbody></table></div></section>
+
+</main><script src="../../assets/demo.js"></script><script src="script.js"></script></body></html>

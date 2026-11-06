@@ -1,0 +1,6 @@
+/* Estilos compartilhados entre os módulos da apresentação. */
+@import url("../../assets/app.css");
+
+#exemplos { justify-content: flex-start; margin-top: 16px; }
+#status-banner { padding: 24px; }
+#status-sub:last-child { margin-bottom: 0; }

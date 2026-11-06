@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#28323E"><title>Academia Vida Ativa</title><link rel="stylesheet" href="style.css"></head>
+<body>
+<a class="skip-link" href="#conteudo">Ir para o módulo</a>
+<div class="shell">
+<aside class="sidebar">
+ <div class="brand"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M13.5 2 4 13h7l-1 9 10-12h-7l.5-8Z"/></svg></span><div>ACADEMIA<br><strong>VIDA ATIVA</strong></div></div>
+ <div class="profile"><label for="perfil">Área de trabalho</label><select id="perfil"><option value="admin">Administração</option><option value="portaria">Portaria</option></select></div>
+ <nav class="sidebar-nav" aria-label="Módulos da academia"><ul>
+ <li class="item-admin"><a href="modulos/mod01-cadastros/index.html" target="conteudo" class="nav-link"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M22 21v-2a4 4 0 0 0-3-3.87"/><circle cx="9" cy="7" r="4"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Gestão de Cadastros</span></a></li>
+ <li class="item-admin"><a href="modulos/modulo%202/index.html" target="conteudo" class="nav-link"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h4"/></svg><span>Financeiro e Planos</span></a></li>
+ <li class="item-portaria"><a href="modulos/mod03-catraca/index.html" target="conteudo" class="nav-link"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 21H4V3h5M10 12h12m-4-4 4 4-4 4M10 3h5v18h-5"/></svg><span>Controle de Catraca</span></a></li>
+ <li class="item-admin"><a href="modulos/mod04-auditoria/index.html" target="conteudo" class="nav-link"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3 3 7v5c0 5 9 9 9 9s9-4 9-9V7l-9-4Z"/><path d="m8 12 3 3 5-6"/></svg><span>Liberação e Auditoria</span></a></li>
+ <li class="item-admin"><a href="modulos/Modulo%205/index.html" target="conteudo" class="nav-link"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg><span>Avaliação Física</span></a></li>
+ <li class="item-admin"><a href="modulos/mod06-relatorios/index.html" target="conteudo" class="nav-link"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 3v18h17M8 16v-5m5 5V7m5 9v-8"/></svg><span>Relatórios Gerenciais</span></a></li>
+ </ul></nav>
+ <p class="nav-hint">Deslize para ver os módulos →</p>
+ <div class="sidebar-footer"><p>Gestão da academia</p></div>
+</aside>
+<main class="content">
+ <header class="workspace-bar"><strong id="workspace-name">Administração</strong><span>Academia Vida Ativa</span></header>
+ <iframe id="conteudo" name="conteudo" title="Gestão de Cadastros" src="modulos/mod01-cadastros/index.html"></iframe>
+ <p id="shell-feedback" class="shell-feedback" role="status" aria-live="polite"></p>
+</main>
+</div>
+<script src="assets/demo.js"></script><script src="main.js"></script>
+</body></html>

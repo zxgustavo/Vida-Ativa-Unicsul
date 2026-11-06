@@ -1,0 +1,5 @@
+/* Estilos compartilhados entre os módulos da apresentação. */
+@import url("../../assets/app.css");
+
+.table-wrap table { min-width: 760px; }
+th:nth-child(5), td:nth-child(5) { text-align: right; }

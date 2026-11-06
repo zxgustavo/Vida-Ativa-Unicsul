@@ -1,0 +1,4 @@
+/* Estilos compartilhados entre os módulos da apresentação. */
+@import url("../../assets/app.css");
+
+.table-wrap table { min-width: 840px; }
