@@ -1,5 +1,0 @@
-/* Estilos compartilhados entre os módulos da apresentação. */
-@import url("../../assets/app.css");
-.module:has(#formCatraca) .split > .card:last-child { min-height: 100%; }
-.module:has(#formCatraca) .split > .card:last-child .status-panel { min-height: 160px; }
-.module:has(#formCatraca) .clock { padding-top: 14px; border-top: 1px solid var(--border); }

@@ -1,0 +1,5 @@
+/* Estilos compartilhados entre os módulos da apresentação. */
+@import url("../../assets/app.css");
+.module:has(#formCatraca) .split > .card:last-child { min-height: 100%; }
+.module:has(#formCatraca) .status-panel { min-height: 180px; display: flex; flex-direction: column; justify-content: center; }
+.module:has(#formCatraca) .status-title { font-size: clamp(24px, 4vw, 36px); font-weight: 700; }

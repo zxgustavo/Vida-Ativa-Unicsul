@@ -1,0 +1,63 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Aluno {
+  id                 String   @id @default(uuid())
+  nome               String
+  cpf                String   @unique
+  matricula          String   @unique
+  telefone           String?
+  dataNascimento     String?
+  endereco           String?
+  nomeEmergencia     String?
+  telefoneEmergencia String?
+  foto               String?
+  restricoesMedicas  String?
+  observacoes        String?
+  ativo              Boolean  @default(true)
+  criadoEm           DateTime @default(now())
+  atualizadoEm       DateTime @updatedAt
+  contratos          Contrato[]
+  avaliacoes         AvaliacaoFisica[]
+}
+
+model AvaliacaoFisica {
+  id                 String   @id @default(uuid())
+  alunoId            String
+  aluno              Aluno    @relation(fields: [alunoId], references: [id], onDelete: Restrict)
+  dataAvaliacao      DateTime
+  peso               Float
+  altura             Float
+  percentualGordura  Float?
+  objetivo           String
+  dataReavaliacao    DateTime?
+  criadoEm           DateTime @default(now())
+  atualizadoEm       DateTime @updatedAt
+
+  @@index([alunoId])
+}
+
+model Contrato {
+  id                String   @id @default(uuid())
+  alunoId           String
+  aluno             Aluno    @relation(fields: [alunoId], references: [id], onDelete: Restrict)
+  plano             String
+  valor             Float
+  dataInicio        DateTime
+  dataFim           DateTime
+  situacao          String
+  tolerancia        Int      @default(5)
+  diasSuspensos     Int      @default(0)
+  formaPagamento    String   @default("PIX")
+  statusPagamento   String   @default("Pendente")
+  dataPagamento     DateTime?
+  criadoEm          DateTime @default(now())
+  atualizadoEm      DateTime @updatedAt
+
+  @@index([alunoId])
+}

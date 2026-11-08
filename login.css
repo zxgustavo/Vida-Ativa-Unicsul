@@ -1,0 +1,9 @@
+@import url("assets/app.css");
+.login { min-height: 100vh; min-height: 100dvh; display: grid; place-items: center; padding: 24px; }
+.login-card { width: min(100%, 440px); margin: 0; padding: clamp(24px, 6vw, 40px); }
+.login-brand { display: flex; align-items: center; min-width: 0; margin-bottom: 24px; }
+.login-logo { display: block; width: 100%; max-width: 340px; height: 96px; object-fit: cover; object-position: center; border-radius: 8px; }
+.login .subtitle { margin-bottom: 24px; }
+.login form { display: grid; gap: 16px; }
+.login .feedback { margin: 0; }
+.login button { width: 100%; }
