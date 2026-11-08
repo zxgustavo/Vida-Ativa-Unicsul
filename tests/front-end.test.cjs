@@ -345,9 +345,20 @@ test('Histórico de avaliações busca por nome, CPF e matrícula e restaura a l
  p.nodes.filtroAluno.value='não existe';await p.nodes.filtroAluno.fire('input');assert.match(p.nodes.historico.textContent,/Nenhuma avaliação/);p.nodes.filtroAluno.value='';await p.nodes.filtroAluno.fire('input');assert.equal(p.nodes.historico.children.length,2);assert.equal(p.apiCalls.length,calls);
  assert.equal(p.nodes.filtroInicio,undefined);assert.equal(p.nodes.filtroFim,undefined);assert.equal(p.nodes['limpar-filtros'],undefined);
 });
+test('Histórico distingue alunos homônimos com CPF formatado e permite busca por CPF',async()=>{
+ const storage=new Map(),{D}=model(storage);D.transaction(s=>{s.students[1].name=s.students[0].name;s.evaluations.push({...s.evaluations[0],id:'homonimo',studentId:'2222'});});
+ const p=page('modulos/modulo-05-avaliacao/index.html',storage);await p.ready;assert.match(p.html,/<th scope="col">Matrícula<\/th><th scope="col">CPF<\/th><th scope="col">Data<\/th>/);assert.equal(p.nodes.historico.children.length,2);
+ const rows=p.nodes.historico.children;assert.equal(rows[0].children[0].textContent,rows[1].children[0].textContent);assert.deepEqual(rows.map(r=>r.children[2].textContent).sort(),['168.995.350-09','529.982.247-25']);
+ p.nodes.filtroAluno.value='168.995.350-09';await p.nodes.filtroAluno.fire('input');assert.equal(p.nodes.historico.children.length,1);assert.equal(p.nodes.historico.children[0].children[1].textContent,'2222');
+ p.nodes.filtroAluno.value='não existe';await p.nodes.filtroAluno.fire('input');assert.equal(p.nodes.historico.children[0].children[0].colSpan,9);
+});
+test('CPF da avaliação usa dados relacionados quando o aluno não está na lista',async()=>{
+ const student={id:'fora-da-lista',nome:'Aluno inativo',matricula:'9876',cpf:'52998224725'},evaluation={id:'a',alunoId:student.id,aluno:student,dataAvaliacao:'2026-10-01T00:00:00.000Z',peso:70,altura:170,percentualGordura:null,objetivo:'Outro',dataReavaliacao:null};
+ const fetchApi=async url=>({ok:true,json:async()=>String(url).endsWith('/alunos')?[]:[evaluation]});const p=page('modulos/modulo-05-avaliacao/index.html',new Map(),fetchApi);await p.ready;assert.equal(p.nodes.historico.children[0].children[2].textContent,'529.982.247-25');
+});
 test('Objetivos exibem etiquetas do tema com cores e texto preservados',async()=>{
  const storage=new Map(),{D}=model(storage),objectives=['Emagrecimento','Ganho de massa muscular','Condicionamento físico','Manutenção da saúde','Outro','Objetivo personalizado'];D.transaction(s=>{s.evaluations=objectives.map((objective,i)=>({...s.evaluations[0],id:'objetivo-'+i,date:D.addDays(D.today(),-i),objective}));});
- const p=page('modulos/modulo-05-avaliacao/index.html',storage);await p.ready;const tones=['warn','ok','info','neutral','neutral','neutral'];for(let i=0;i<objectives.length;i++){const badge=p.nodes.historico.children[i].children[6].children[0];assert.equal(badge.textContent,objectives[i]);assert.equal(badge.className,'badge '+tones[i]);}
+ const p=page('modulos/modulo-05-avaliacao/index.html',storage);await p.ready;const tones=['warn','ok','info','neutral','neutral','neutral'];for(let i=0;i<objectives.length;i++){const badge=p.nodes.historico.children[i].children[7].children[0];assert.equal(badge.textContent,objectives[i]);assert.equal(badge.className,'badge '+tones[i]);}
  const {css,tokens}=theme();assert.match(css,/\.badge\.info\s*\{[^}]*var\(--blue\)/);assert.ok(contrast(tokens['--blue'],tokens['--blue-soft'])>=4.5);
 });
 test('Histórico de liberações filtra datas e situação e usa etiquetas semânticas',async()=>{
