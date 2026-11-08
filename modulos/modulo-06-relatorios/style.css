@@ -3,3 +3,4 @@
 .module:has(#formRelatorio) .filters { align-items: end; }
 .module:has(#formRelatorio) .stats .stat { min-width: 0; }
 .module:has(#formRelatorio) .stats .stat-value { overflow-wrap: anywhere; }
+.report-table-actions { display: flex; justify-content: flex-end; margin-top: 12px; }

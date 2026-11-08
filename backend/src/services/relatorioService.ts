@@ -32,7 +32,7 @@ export const relatorioService = {
     const digitos = /^[\d.\- /]+$/.test(busca) ? busca.replace(/\D/g, "") : "";
     const limiteFim = new Date(`${fim}T00:00:00.000Z`);limiteFim.setUTCDate(limiteFim.getUTCDate() + 1);
     const [alunos, contratos, avaliacoesMes, avaliacoesPeriodo] = await prisma.$transaction([
-      prisma.aluno.findMany({ select: { id: true, nome: true, matricula: true, cpf: true, ativo: true }, orderBy: { nome: "asc" } }),
+      prisma.aluno.findMany({ select: { id: true, nome: true, matricula: true, cpf: true, ativo: true, criadoEm: true }, orderBy: { nome: "asc" } }),
       prisma.contrato.findMany({ select: { id: true, alunoId: true, plano: true, valor: true, dataInicio: true, dataFim: true, situacao: true }, orderBy: { dataInicio: "desc" } }),
       prisma.avaliacaoFisica.count({ where: { dataAvaliacao: { gte: new Date(`${inicioMes}T00:00:00.000Z`), lt: proximoMes } } }),
       prisma.avaliacaoFisica.count({ where: { dataAvaliacao: { gte: new Date(`${inicio}T00:00:00.000Z`), lt: limiteFim } } }),
@@ -50,12 +50,16 @@ export const relatorioService = {
       const lista = porAluno.get(contrato.alunoId) ?? [];
       lista.push(contrato);porAluno.set(contrato.alunoId, lista);
     }
-    const resultados = alunos.filter(a => !busca || normalizar(a.nome).includes(busca) || normalizar(a.matricula).includes(busca) || (digitos && a.cpf.replace(/\D/g, "").includes(digitos))).flatMap(a => {
+    const dataLocal = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit" });
+    const resultados = alunos.filter(a => {
+      const cadastro = dataLocal.format(a.criadoEm);
+      return cadastro >= inicio && cadastro <= fim && (!busca || normalizar(a.nome).includes(busca) || normalizar(a.matricula).includes(busca) || (digitos && a.cpf.replace(/\D/g, "").includes(digitos)));
+    }).flatMap(a => {
       const todos = porAluno.get(a.id) ?? [];
       const filtrados = situacao === "todos" ? todos : todos.filter(c => c.situacaoAtual === situacao);
       if (situacao !== "todos" && situacao !== "Sem contrato" && !filtrados.length) return [];
       if (situacao === "Sem contrato" && todos.length) return [];
-      return [{ id: a.id, nome: a.nome, matricula: a.matricula, ativo: a.ativo, contratos: filtrados }];
+      return [{ id: a.id, nome: a.nome, matricula: a.matricula, ativo: a.ativo, dataCadastro: dataLocal.format(a.criadoEm), contratos: filtrados }];
     });
     return { periodo: { dataInicio: inicio, dataFim: fim }, totais: { alunos: alunos.length, alunosAtivos: alunos.filter(a => a.ativo).length, receitaPrevista, avaliacoesMes, avaliacoesPeriodo, alunosVencidos: vencidos.size, alunosAIniciar: aIniciar.size }, alunos: resultados };
   },
