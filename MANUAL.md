@@ -2,6 +2,15 @@
 
 Guia para preparar o ambiente e apresentar o MVP localmente.
 
+## Pré-requisitos
+
+Antes da apresentação, instale na máquina:
+
+- **[Node.js](https://nodejs.org/en/download)** — escolha uma versão LTS compatível; o instalador também inclui o npm. O Prisma 7 deste projeto exige Node.js `^20.19.0`, `^22.12.0` ou `>=24.0.0` ([requisitos do Prisma](https://www.prisma.io/docs/orm/v7/reference/system-requirements)).
+- **[Git](https://git-scm.com/downloads)** — necessário para clonar o repositório.
+
+Após a instalação, abra um novo terminal e confirme com `node --version`, `npm --version` e `git --version`.
+
 ## Perfis de acesso
 
 | Perfil | Utilizador | Senha | Área inicial |
@@ -13,7 +22,15 @@ O login é simulado e existe para separar as telas da apresentação. As credenc
 
 ## Instalação rápida
 
-Pré-requisito: Node.js compatível com Prisma 7 e npm. Os comandos abaixo usam PowerShell e criam o SQLite local na primeira execução.
+Os comandos abaixo usam PowerShell e criam o SQLite local na primeira execução. Abra o terminal na pasta em que deseja guardar o projeto.
+
+> **Windows — erro de política de execução:** se o PowerShell bloquear `npm`, `npx` ou a inicialização por não permitir scripts, abra o PowerShell ou o terminal PowerShell do VS Code e execute:
+>
+> ```powershell
+> Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
+> ```
+>
+> Se aparecer uma confirmação, responda `Y` ou `S`, conforme o idioma exibido, e pressione Enter. Em seguida, tente o comando novamente. A alteração vale para o usuário atual e permanece até ser alterada; normalmente não é necessário abrir o terminal como administrador para esse escopo. Políticas da organização podem impedir ou sobrepor essa configuração. Consulte a [documentação da Microsoft](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_execution_policies?view=powershell-7.5).
 
 1. Clone o repositório e entre na pasta:
 
@@ -30,7 +47,7 @@ Pré-requisito: Node.js compatível com Prisma 7 e npm. Os comandos abaixo usam 
    Set-Content -Path .env -Value 'DATABASE_URL="file:./dev.db"'
    ```
 
-3. Crie o banco e gere o cliente Prisma:
+3. Ainda na pasta `Vida-Ativa-Unicsul/backend`, crie o banco e gere o cliente Prisma:
 
    ```powershell
    npx prisma db push
@@ -39,7 +56,7 @@ Pré-requisito: Node.js compatível com Prisma 7 e npm. Os comandos abaixo usam 
 
    Em um banco novo, também é possível aplicar as migrações versionadas com `npx prisma migrate deploy` em vez de `npx prisma db push`.
 
-4. Para preencher a apresentação com dados fictícios, execute:
+4. Ainda na pasta `backend`, para preencher a apresentação com dados fictícios, execute:
 
    ```powershell
    npx prisma db seed
@@ -47,7 +64,7 @@ Pré-requisito: Node.js compatível com Prisma 7 e npm. Os comandos abaixo usam 
 
    O seed atualiza o plano e o preço dos contratos fictícios identificados pelo próprio script. O banco local e o arquivo `.env` não são versionados.
 
-5. Inicie a API e mantenha o terminal aberto:
+5. Ainda na pasta `backend`, inicie a API e mantenha esse terminal aberto:
 
    ```powershell
    npm run dev
@@ -55,14 +72,13 @@ Pré-requisito: Node.js compatível com Prisma 7 e npm. Os comandos abaixo usam 
 
    A API ficará em **http://localhost:3333**. O projeto não possui script `npm start`; `npm run dev` é o comando configurado.
 
-6. Em outro terminal, volte à raiz do projeto e inicie o frontend:
+6. Abra outro terminal na **raiz do projeto**, `Vida-Ativa-Unicsul`, e inicie o frontend:
 
    ```powershell
-   cd ..
    node iniciar-preview.cjs
    ```
 
-   Acesse **http://127.0.0.1:8765/**. Encerre cada processo com `Ctrl+C` no terminal correspondente.
+   Se o segundo terminal abrir em `Vida-Ativa-Unicsul/backend`, execute `cd ..` antes de iniciar o frontend. Acesse **http://127.0.0.1:8765/**. Encerre cada processo com `Ctrl+C` no terminal correspondente.
 
 ## Roteiro para a apresentação
 
