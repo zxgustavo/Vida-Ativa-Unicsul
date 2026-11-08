@@ -54,8 +54,8 @@
 .finance-records .table-wrap:focus-visible { outline-offset: 4px; }
 .finance-table th, .finance-table td { padding: 12px 10px; }
 .cell-label { display: none; }
-.record-actions { display: flex; flex-wrap: wrap; gap: 6px; }
-.record-actions .btn { padding: 7px 10px; font-size: 13px; }
+.record-actions { display: flex; flex-wrap: nowrap; gap: 6px; }
+.record-actions .btn { flex: 0 0 auto; padding: 7px 10px; font-size: 13px; }
 .record-name { font-weight: 600; display: block; }
 .record-id { font-size: 12px; color: var(--muted); display: block; margin-top: 4px; }
 .record-detail td { background: var(--surface-soft); padding: 20px; }
@@ -82,5 +82,4 @@
  .summary-grid, .record-detail .summary-grid { grid-template-columns: 1fr; }
  .review-panel { padding: 16px; }
  .filter-status { flex-wrap: wrap; }
- .record-actions .btn { flex: 1 1 auto; }
 }

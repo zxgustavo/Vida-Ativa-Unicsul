@@ -34,13 +34,16 @@ function validateRanges(){
 for(const id of ['data','peso','altura','gordura'])for(const event of ['input','change'])$(id).addEventListener(event,()=>{const error=validateRanges();if(id==='data')nextDate();if(rangeSubmitted)D.feedback(feedback,error?.message||'',Boolean(error));});
 function nextDate(){const value=$('data').value;$('proxima').textContent=D.date(value)?D.formatDate(D.addDays(value,Number($('intervalo').value))):'Selecione a data da avaliação';}
 function render(){
- const query=$('filtroAluno').value,rows=evaluations.filter(e=>{const a=e.aluno,student=students.find(s=>s.id===e.alunoId)||{name:a?.nome,matricula:a?.matricula,cpf:a?.cpf};return !query||D.studentMatches(student,query);});
+ const query=$('filtroAluno').value,from=$('filtroInicio').value,to=$('filtroFim').value,invalid=(from&&!D.date(from))||(to&&!D.date(to))||(from&&to&&from>to);
+ D.feedback($('filtro-periodo-feedback'),invalid?'Informe um período válido: a data inicial deve ser anterior ou igual à data final.':'',Boolean(invalid));
+ const rows=invalid?[]:evaluations.filter(e=>{const a=e.aluno,student=students.find(s=>s.id===e.alunoId)||{name:a?.nome,matricula:a?.matricula,cpf:a?.cpf},day=e.dataAvaliacao.slice(0,10);return (!query||D.studentMatches(student,query))&&(!from||day>=from)&&(!to||day<=to);});
  const paginas=Math.max(1,Math.ceil(rows.length/POR_PAGINA));pagina=Math.min(pagina,paginas);
  $('avaliacoes-pagina').textContent='Página '+pagina+' de '+paginas;$('avaliacoes-anterior').disabled=pagina===1;$('avaliacoes-proxima').disabled=pagina===paginas;
- const body=$('historico');body.replaceChildren();if(!rows.length){D.empty(body,8,query?'Nenhuma avaliação encontrada para esta busca.':'Nenhuma avaliação registrada.');return;}
+ const body=$('historico');body.replaceChildren();if(!rows.length){D.empty(body,8,invalid?'Corrija o período para visualizar as avaliações.':query||from||to?'Nenhuma avaliação encontrada para os filtros.':'Nenhuma avaliação registrada.');return;}
  rows.sort((a,b)=>b.dataAvaliacao.localeCompare(a.dataAvaliacao)).slice((pagina-1)*POR_PAGINA,pagina*POR_PAGINA).forEach(e=>{const s=students.find(s=>s.id===e.alunoId),row=document.createElement('tr');[s?.name||e.aluno?.nome||'Aluno não encontrado',s?.matricula||e.aluno?.matricula||'—',D.formatDate(e.dataAvaliacao.slice(0,10)),D.number(e.peso)+' kg',D.number(e.altura)+' cm',e.percentualGordura===null?'—':D.number(e.percentualGordura)+'%',e.objetivo,D.formatDate(e.dataReavaliacao?.slice(0,10))].forEach(value=>D.cell(row,value));body.append(row);});
 }
 $('filtroAluno').addEventListener('input',()=>{pagina=1;render();});['data','intervalo'].forEach(id=>$(id).addEventListener('change',nextDate));
+for(const id of ['filtroInicio','filtroFim'])for(const event of ['input','change'])$(id).addEventListener(event,()=>{pagina=1;render();});
 $('avaliacoes-anterior').addEventListener('click',()=>{if(pagina>1){pagina--;render();}});
 $('avaliacoes-proxima').addEventListener('click',()=>{if(!$('avaliacoes-proxima').disabled){pagina++;render();}});
 form.addEventListener('reset',()=>{rangeSubmitted=false;form.classList.remove('was-validated');for(const id of ['data','peso','altura','gordura'])$(id).setCustomValidity('');setTimeout(()=>{picker.clear();$('matricula').value='';$('data').removeAttribute('min');nextDate();D.feedback(feedback,'');window.demoDirty=false;},0);});
