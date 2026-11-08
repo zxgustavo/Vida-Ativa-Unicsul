@@ -19,6 +19,9 @@
   --yellow: #F2C66D;
   --yellow-soft: #302719;
   --yellow-border: #8A6A30;
+  --blue: #9CCEFF;
+  --blue-soft: #192A3B;
+  --blue-border: #507AA3;
   --red: #FF9B96;
   --red-soft: #342122;
   --red-border: #985655;
@@ -117,6 +120,7 @@ input[type=checkbox] { width: 18px; height: 18px; min-height: 18px; accent-color
 .badge { display: inline-block; border: 1px solid transparent; border-radius: 100px; padding: 4px 8px; font-size: 13px; font-weight: 600; white-space: nowrap; }
 .badge.ok { background: var(--green-soft); color: var(--green); border-color: var(--green-border); }
 .badge.warn { background: var(--yellow-soft); color: var(--yellow); border-color: var(--yellow-border); }
+.badge.info { background: var(--blue-soft); color: var(--blue); border-color: var(--blue-border); }
 .badge.danger { background: var(--red-soft); color: var(--red); border-color: var(--red-border); }
 .badge.neutral { background: var(--disabled-bg); color: var(--muted); }
 .table-wrap { max-width: 100%; min-width: 0; overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius-control); margin-top: 16px; background: color-mix(in srgb, var(--surface), var(--bg) 18%); scrollbar-color: var(--control-border) transparent; }

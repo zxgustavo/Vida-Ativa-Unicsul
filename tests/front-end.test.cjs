@@ -345,6 +345,16 @@ test('Histórico de avaliações combina período inclusivo e busca, reinicia a 
  p.nodes.filtroAluno.value='Não existe';await p.nodes.filtroAluno.fire('input');assert.match(p.nodes.historico.textContent,/Nenhuma avaliação/);p.nodes.filtroAluno.value='';p.nodes.filtroInicio.value='2026-10-07';await p.nodes.filtroInicio.fire('change');assert.match(p.nodes['filtro-periodo-feedback'].textContent,/período válido/);assert.match(p.nodes.historico.textContent,/Corrija o período/);
  p.nodes.filtroInicio.value='';p.nodes.filtroFim.value='';await p.nodes.filtroFim.fire('change');assert.equal(p.nodes['avaliacoes-pagina'].textContent,'Página 1 de 3');assert.equal(p.nodes['filtro-periodo-feedback'].textContent,'');
 });
+test('Limpar filtros restaura o histórico e preserva o formulário de avaliação',async()=>{
+ const storage=new Map(),{D}=model(storage);D.transaction(s=>{for(let i=0;i<22;i++)s.evaluations.push({...s.evaluations[0],id:'limpar-'+i,date:D.addDays(D.today(),-i)});});
+ const p=page('modulos/modulo-05-avaliacao/index.html',storage);await p.ready;await chooseStudent(p,'alunoBusca','1111');p.nodes.filtroInicio.value='2026-10-07';p.nodes.filtroFim.value='2026-10-06';await p.nodes.filtroInicio.fire('change');assert.match(p.nodes['filtro-periodo-feedback'].textContent,/período válido/);
+ const calls=p.apiCalls.length;await p.nodes['limpar-filtros'].fire('click');assert.equal(p.nodes.filtroAluno.value,'');assert.equal(p.nodes.filtroInicio.value,'');assert.equal(p.nodes.filtroFim.value,'');assert.equal(p.nodes['filtro-periodo-feedback'].textContent,'');assert.equal(p.nodes['avaliacoes-pagina'].textContent,'Página 1 de 3');assert.equal(p.nodes.historico.children.length,10);assert.equal(p.nodes.aluno.value,'1111');assert.equal(p.apiCalls.length,calls);
+});
+test('Objetivos exibem etiquetas do tema com cores e texto preservados',async()=>{
+ const storage=new Map(),{D}=model(storage),objectives=['Emagrecimento','Ganho de massa muscular','Condicionamento físico','Manutenção da saúde','Outro','Objetivo personalizado'];D.transaction(s=>{s.evaluations=objectives.map((objective,i)=>({...s.evaluations[0],id:'objetivo-'+i,date:D.addDays(D.today(),-i),objective}));});
+ const p=page('modulos/modulo-05-avaliacao/index.html',storage);await p.ready;const tones=['warn','ok','info','neutral','neutral','neutral'];for(let i=0;i<objectives.length;i++){const badge=p.nodes.historico.children[i].children[6].children[0];assert.equal(badge.textContent,objectives[i]);assert.equal(badge.className,'badge '+tones[i]);}
+ const {css,tokens}=theme();assert.match(css,/\.badge\.info\s*\{[^}]*var\(--blue\)/);assert.ok(contrast(tokens['--blue'],tokens['--blue-soft'])>=4.5);
+});
 test('Histórico de liberações filtra datas e situação e usa etiquetas semânticas',async()=>{
  const storage=new Map(),{D}=model(storage);D.transaction(s=>{s.authorizations=[
  {studentId:'1111',type:'entrada',actor:'Admin',createdAt:'2026-10-08T15:00:00Z',expiresAt:'2026-10-09T15:00:00Z',usedAt:'2026-10-08T15:01:00Z',reason:'Utilizada no teste'},
