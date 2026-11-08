@@ -52,12 +52,7 @@
 .contract-management .btn { flex-shrink: 0; }
 .finance-records .card-heading { margin-bottom: 0; }
 .finance-records .table-wrap:focus-visible { outline-offset: 4px; }
-.finance-table { min-width: 0; table-layout: fixed; }
-.finance-table th, .finance-table td { white-space: normal; padding: 12px 10px; overflow-wrap: anywhere; }
-.finance-table th:first-child { width: 18%; }
-.finance-table th:last-child { width: 30%; }
-.finance-table td:first-child { min-width: 0; }
-.finance-table .badge { white-space: normal; }
+.finance-table th, .finance-table td { padding: 12px 10px; }
 .cell-label { display: none; }
 .record-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 .record-actions .btn { padding: 7px 10px; font-size: 13px; }
@@ -69,19 +64,6 @@
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
 @media(max-width:999px) {
  .filter-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
- .finance-records { padding: 0; border: 0; background: transparent; }
- .finance-records .table-wrap { border: 0; border-radius: 0; overflow: visible; }
- .finance-table, .finance-table tbody { display: block; }
- .finance-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
- .finance-table .record-row { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px 20px; margin-top: 16px; padding: 20px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
- .finance-table .record-row > td { display: block; padding: 0; border: 0; min-width: 0; }
- .finance-table .record-row > td:first-child, .finance-table .record-row > td:last-child { grid-column: 1/-1; }
- .finance-table .record-row > td:last-child { border-top: 1px solid var(--border); padding-top: 14px; }
- .record-name { font-size: 17px; }
- .cell-label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
- .record-row > td:last-child > .cell-label { display: none; }
- .record-detail, .record-detail > td { display: block; }
- .record-detail > td { border: 1px solid var(--border); border-radius: 8px; margin-top: 8px; }
  .record-detail .summary-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
 }
 @media(max-width:620px) {
@@ -101,5 +83,4 @@
  .review-panel { padding: 16px; }
  .filter-status { flex-wrap: wrap; }
  .record-actions .btn { flex: 1 1 auto; }
- .finance-table .record-row { gap: 14px; padding: 16px; }
 }
