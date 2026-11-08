@@ -29,6 +29,7 @@ async function validate(event){
  try{
   let response;try{response=await fetch('http://localhost:3333/api/portaria/acesso/'+encodeURIComponent(matricula),{cache:'no-store'});}catch{throw new Error('Não foi possível conectar à API. Tente novamente.');}
   let result;try{result=await response.json();}catch{throw new Error('A API retornou uma resposta inválida.');}
+  if(response.status===429){if(current===version){$('status-banner').className='status-panel warn';$('status-title').textContent='Catraca bloqueada';$('status-sub').textContent=result?.erro||'Aguarde 3 minutos para nova leitura.';}return;}
   if(!response.ok)throw new Error(result?.erro||'Não foi possível consultar a matrícula.');
   if(!['LIBERADO','NEGADO'].includes(result?.acesso))throw new Error('A API retornou uma resposta inválida.');
   await carregarLogs();
