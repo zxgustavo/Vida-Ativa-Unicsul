@@ -15,7 +15,7 @@ Após a instalação, abra um novo terminal e confirme com `node --version`, `np
 
 | Perfil | Utilizador | Senha | Área inicial |
 | --- | --- | --- | --- |
-| Administração | `admin` | `admin123` | Relatórios |
+| Administração | `admin` | `admin123` | Gestão de Cadastros |
 | Portaria | `portaria` | `portaria123` | Consulta de acesso |
 
 O login é simulado e existe para separar as telas da apresentação. As credenciais ficam no JavaScript do navegador, e a API não autentica solicitações; não use dados reais ou esse mecanismo como segurança de produção.
@@ -86,7 +86,7 @@ Os comandos abaixo usam PowerShell e criam o SQLite local na primeira execução
 2. Abra **Cadastros**, procure um aluno e mostre a desativação por *soft delete*. Para preservar os exemplos, crie um aluno fictício antes de demonstrar a desativação.
 3. Em **Financeiro**, apresente planos, pagamento e filtros. Mostre como a situação depende das datas e das regras do contrato.
 4. Em **Avaliação Física**, registre medidas válidas e mostre o histórico. Peso, altura e percentual de gordura são validados na API.
-5. Saia e entre como **Portaria**. Consulte uma matrícula ativa com contrato vigente e depois uma inativa ou inexistente para comparar os resultados. A consulta é somente de leitura.
+5. Saia e entre como **Portaria**. Consulte uma matrícula ativa com contrato vigente e depois uma inativa ou inexistente para comparar os resultados. Cada consulta concluída registra sua decisão no banco. Repita a mesma matrícula em menos de três minutos para demonstrar o bloqueio por cooldown (HTTP 429); tentativas bloqueadas pelo cooldown não geram um novo log.
 
 O módulo Liberação e Auditoria ainda utiliza dados locais de demonstração e não libera acessos na Portaria real. O sistema não aciona catracas nem processa pagamentos bancários.
 
