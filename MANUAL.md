@@ -54,7 +54,7 @@ Os comandos abaixo usam PowerShell e criam o SQLite local na primeira execução
    npx prisma generate
    ```
 
-   Em um banco novo, também é possível aplicar as migrações versionadas com `npx prisma migrate deploy` em vez de `npx prisma db push`.
+   Use `db push` para incluir todos os modelos atuais, incluindo os logs de acesso; as migrações versionadas ainda não contemplam essa tabela.
 
 4. Ainda na pasta `backend`, para preencher a apresentação com dados fictícios, execute:
 

@@ -39,6 +39,7 @@ const tratarErro: ErrorRequestHandler = (erro, _req, res, _next) => {
 
 app.use(tratarErro);
 
-app.listen(3333, () => {
-  console.log("Servidor da Academia Vida Ativa em http://localhost:3333");
+const porta = Number(process.env.PORT) || 3333;
+app.listen(porta, () => {
+  console.log(`Servidor da Academia Vida Ativa em http://localhost:${porta}`);
 });

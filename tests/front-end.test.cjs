@@ -105,6 +105,7 @@ function page(file,storage=new Map(),fetchOverride,sessionProfile='admin',sessio
   return {ok:true,status:200,json:async()=>({periodo:{dataInicio:params.get('dataInicio'),dataFim:params.get('dataFim')},totais:{alunos:3,alunosAtivos:2,receitaPrevista:120,avaliacoesMes:1,avaliacoesPeriodo:params.get('dataInicio').startsWith('2099')?0:1,alunosVencidos:1,alunosAIniciar:0},alunos:matches})};
  };
  if(file==='modulos/modulo-03-portaria/index.html')sandbox.fetch=async(url)=>{
+  if(String(url).endsWith('/logs')){apiCalls.push({url,method:'GET'});return {ok:true,status:200,json:async()=>([])};}
   apiCalls.push({url,method:'GET'});const matricula=String(url).split('/').pop(),aluno=D.getState().students.find(s=>s.id===matricula);
   const acesso=matricula==='1111'?'LIBERADO':'NEGADO';return {ok:true,status:200,json:async()=>({acesso,motivo:acesso==='LIBERADO'?'Cadastro ativo e contrato vigente.':'Aluno sem contrato vigente.',aluno:aluno?{nome:aluno.name,matricula:aluno.id,ativo:true}:null,contrato:acesso==='LIBERADO'?{plano:'Mensal',dataFim:'2026-10-28T00:00:00.000Z'}:null})};
  };

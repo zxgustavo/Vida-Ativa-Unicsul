@@ -3,3 +3,9 @@
 .module:has(#formCatraca) .split > .card:last-child { min-height: 100%; }
 .module:has(#formCatraca) .status-panel { min-height: 180px; display: flex; flex-direction: column; justify-content: center; }
 .module:has(#formCatraca) .status-title { font-size: clamp(24px, 4vw, 36px); font-weight: 700; }
+.access-log { margin-top: 24px; }
+.access-log-list { list-style: none; margin: 0; padding: 0; }
+.access-log-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 12px 0; border-bottom: 1px solid var(--border); overflow-wrap: anywhere; }
+.access-log-list li:last-child { border-bottom: 0; }
+.access-log-list .log-status { font-weight: 600; color: var(--accent); }
+.access-log-list .log-status.denied { color: var(--red); }
