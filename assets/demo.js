@@ -21,24 +21,7 @@ function validCpf(value){const v=digits(value);if(v.length!==11||/^(\d)\1{10}$/.
 function cpfText(value){const v=digits(value);return v.length===11?v.slice(0,3)+'.'+v.slice(3,6)+'.'+v.slice(6,9)+'-'+v.slice(9):value;}
 function phoneText(value){const v=digits(value);return /^(\d{10}|\d{11})$/.test(v)?'('+v.slice(0,2)+') '+v.slice(2,-4)+'-'+v.slice(-4):value;}
 function id(prefix){return prefix+'-'+(global.crypto?.randomUUID?.()||Date.now().toString(36)+'-'+Math.random().toString(36).slice(2));}
-function seed(){
- const now=today();
- const students=[
- {id:'1111',name:'Lucas Andrade',cpf:'52998224725',birth:'1996-04-12',phone:'11999991111',address:'Rua Exemplo, 120',emergencyName:'Ana Andrade',emergencyPhone:'11999990001',health:'Nenhuma restrição informada.',notes:'Objetivo: condicionamento físico.',photo:''},
- {id:'2222',name:'Mariana Lima',cpf:'16899535009',birth:'1998-08-21',phone:'11999992222',address:'Avenida Modelo, 45',emergencyName:'Paulo Lima',emergencyPhone:'11999990002',health:'Nenhuma restrição informada.',notes:'Treino no período da manhã.',photo:''},
- {id:'3333',name:'Carlos Eduardo',cpf:'11144477735',birth:'1990-02-10',phone:'11999993333',address:'Rua Demonstração, 300',emergencyName:'Maria Eduardo',emergencyPhone:'11999990003',health:'Nenhuma restrição informada.',notes:'Objetivo: ganho de massa muscular.',photo:''}
- ];
- const contracts=[
- {id:'c-1111',studentId:'1111',planId:'mensal',start:addDays(now,-10),due:addDays(now,20),state:'Ativo',tolerance:5,suspendedAt:null,suspendedDays:0},
- {id:'c-2222',studentId:'2222',planId:'trimestral',start:addMonths(addDays(now,-3),-3),due:addDays(now,-3),state:'Ativo',tolerance:5,suspendedAt:null,suspendedDays:0},
- {id:'c-3333',studentId:'3333',planId:'mensal',start:addMonths(addDays(now,-12),-1),due:addDays(now,-12),state:'Ativo',tolerance:5,suspendedAt:null,suspendedDays:0}
- ];
- const payments=contracts.map((c,i)=>({id:'p-'+c.studentId,contractId:c.id,amount:plans.find(p=>p.id===c.planId).price,method:'PIX',status:i===0?'Pago':i===1?'Pendente':'Atrasado',paidDate:i===0?c.start:null,updatedAt:new Date().toISOString()}));
- const evaluations=[{id:'a-1111',studentId:'1111',date:addDays(now,-7),weight:74.5,height:175,fat:18.2,objective:'Condicionamento físico',interval:30,next:addDays(now,23)}];
- const accesses=[];
- for(let i=0;i<8;i++){const day=addDays(now,-(i%5));accesses.push({id:'ac-seed-'+i,studentId:students[i%2].id,matricula:students[i%2].id,date:day,time:day+'T08:30:00',allowed:true,result:'Liberado',tone:'ok',actor:'Portaria • João Ribeiro',reason:'Acesso de demonstração'});}
- return {version:1,students,contracts,payments,evaluations,accesses,authorizations:[]};
-}
+function seed(){return {version:1,students:[],contracts:[],payments:[],evaluations:[],accesses:[],authorizations:[]};}
 function parentStore(){try{return global.parent!==global&&global.parent.Demo?global.parent.Demo:null;}catch(e){return null;}}
 function read(){const parent=parentStore();if(parent)return parent.getState();try{const raw=global.localStorage?.getItem(KEY);if(raw){const parsed=JSON.parse(raw);if(parsed.version===1&&['students','contracts','payments','evaluations','accesses','authorizations'].every(k=>Array.isArray(parsed[k]))){memory=parsed;return structuredClone(parsed);}}}catch(e){storageAvailable=false;}if(!memory)memory=seed();return structuredClone(memory);}
 function write(state){const parent=parentStore();if(parent)return parent.saveState(state);if(storageAvailable){try{global.localStorage.setItem(KEY,JSON.stringify(state));}catch(e){if(e.name==='QuotaExceededError')throw new Error('Não há espaço disponível para salvar. Tente uma foto menor.');storageAvailable=false;}}memory=structuredClone(state);global.dispatchEvent?.(new Event('demo:change'));return state;}
