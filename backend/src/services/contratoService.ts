@@ -3,6 +3,18 @@ import { alunoRepository } from "../repositories/alunoRepository";
 import { contratoRepository } from "../repositories/contratoRepository";
 import { ErroAplicacao } from "./alunoService";
 
+function renovarVencimento(hoje: string, plano: string): Date {
+  const meses = new Map([["mensal", 1], ["trimestral", 3], ["anual", 12]]).get(plano.trim().toLowerCase());
+  if (!meses) throw new ErroAplicacao("Plano sem duração definida para renovação automática.", 400);
+  const data = new Date(`${hoje}T00:00:00.000Z`), dia = data.getUTCDate();
+  // Evita que 31/jan + 1 mês ultrapasse fevereiro (inclusive em anos bissextos).
+  data.setUTCDate(1);
+  data.setUTCMonth(data.getUTCMonth() + meses);
+  const ultimoDia = new Date(Date.UTC(data.getUTCFullYear(), data.getUTCMonth() + 1, 0)).getUTCDate();
+  data.setUTCDate(Math.min(dia, ultimoDia));
+  return data;
+}
+
 function validar(input: unknown, atual?: any): Prisma.ContratoUncheckedCreateInput & { dataInicio: Date; dataFim: Date } {
   if (!input || typeof input !== "object" || Array.isArray(input)) throw new ErroAplicacao("Informe os dados do contrato.", 400);
   const dados = { ...atual, ...(input as Record<string, unknown>) };
@@ -50,9 +62,15 @@ export const contratoService = {
     if (pagamentoInformado) {
       if (atual.situacao === "Cancelado") {
         dados.situacao = "Cancelado";
-      } else if (dados.situacao !== "Cancelado") {
+      } else if (dados.situacao !== "Cancelado" && dados.situacao !== "Suspenso" && atual.situacao !== "Suspenso") {
         const hoje = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
-        if (dados.dataInicio.toISOString().slice(0, 10) <= hoje && dados.dataFim.toISOString().slice(0, 10) > hoje) {
+        const vencido = atual.situacao === "Vencido" || atual.dataFim.toISOString().slice(0, 10) < hoje;
+        // Datas escolhidas explicitamente na edição continuam sendo respeitadas.
+        // Registrar pagamento envia apenas os campos da cobrança.
+        if (vencido && dados.dataInicio.toISOString().slice(0, 10) <= hoje && dados.dataFim.getTime() === atual.dataFim.getTime()) {
+          dados.dataFim = renovarVencimento(hoje, dados.plano);
+        }
+        if (dados.dataInicio.toISOString().slice(0, 10) <= hoje && dados.dataFim.toISOString().slice(0, 10) >= hoje) {
           dados.situacao = "Vigente";
         }
       }

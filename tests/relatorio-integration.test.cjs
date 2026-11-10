@@ -29,7 +29,7 @@ async function main(){
   assert.equal(t.alunos,b.alunos+3);assert.equal(t.alunosAtivos,b.alunosAtivos+2);assert.equal(t.receitaPrevista,Math.round((b.receitaPrevista+200)*100)/100);
   assert.equal(t.alunosVencidos,b.alunosVencidos+1);assert.equal(t.alunosAIniciar,b.alunosAIniciar+1);assert.equal(t.avaliacoesMes,b.avaliacoesMes+1);
   assert.equal(t.avaliacoesPeriodo,db.prepare('SELECT COUNT(*) AS n FROM AvaliacaoFisica WHERE substr(dataAvaliacao, 1, 10) = ?').get(today).n);
-  assert.equal(report.alunos.length,2);assert.equal(report.alunos.find(a=>a.id===ids[0]).contratos.length,3);assert.equal('cpf' in report.alunos[0],false);assert.ok(report.alunos.every(a=>a.dataCadastro===today));assert.ok(!report.alunos.some(a=>a.id===ids[1]));
+  assert.equal(report.alunos.length,2);assert.equal(report.alunos.find(a=>a.id===ids[0]).contratos.length,3);assert.equal(report.alunos.find(a=>a.id===ids[0]).cpf,alunos[0].cpf);assert.ok(report.alunos.every(a=>a.dataCadastro===today));assert.ok(!report.alunos.some(a=>a.id===ids[1]));
   const yesterday=day(today,-1),anterior=await request('/relatorios/dashboard?dataInicio='+yesterday+'&dataFim='+yesterday+'&busca='+token);assert.equal(anterior.body.alunos.length,1);assert.equal(anterior.body.alunos[0].id,ids[1]);assert.equal(anterior.body.alunos[0].dataCadastro,yesterday);
   const periodo='dataInicio='+today+'&dataFim='+today+'&busca='+token;
   const vencido=await request('/relatorios/dashboard?'+periodo+'&situacao=Vencido');assert.equal(vencido.body.alunos.length,1);assert.equal(vencido.body.alunos[0].contratos.length,2);assert.ok(vencido.body.alunos[0].contratos.every(c=>c.situacaoAtual==='Vencido'));
@@ -38,7 +38,7 @@ async function main(){
   let calls=0;const p=page('modulos/modulo-06-relatorios/index.html',new Map(),async(url,options)=>{calls++;return fetch(String(url).replace('http://localhost:3333/api',api),options);});await p.ready;
   p.nodes.dataInicio.value=today;p.nodes.dataFim.value=today;p.nodes.buscarAluno.value=token;await p.nodes.formRelatorio.fire('submit');assert.equal(p.nodes['total-alunos'].textContent,String(b.alunos+3));assert.match(p.nodes.tabelaCorpo.textContent,new RegExp(token));assert.equal(p.nodes['avaliacoes-periodo'].textContent,String(t.avaliacoesPeriodo));
   p.nodes.status.value='Vencido';await p.nodes.formRelatorio.fire('submit');assert.equal(p.nodes.tabelaCorpo.children.length,2);
-  assert.ok(p.nodes.tabelaCorpo.children.every(row=>row.children[5].textContent==='Vencido'));assert.equal(p.nodes.tabelaCorpo.children[0].children[2].textContent,today.split('-').reverse().join('/'));
+  assert.ok(p.nodes.tabelaCorpo.children.every(row=>row.children[6].textContent==='Vencido'));assert.equal(p.nodes.tabelaCorpo.children[0].children[3].textContent,today.split('-').reverse().join('/'));
   const prev=calls;await p.nodes.limparFiltros.fire('click');assert.ok(calls>prev);assert.equal(p.nodes.status.value,'todos');assert.equal(p.nodes.buscarAluno.value,'');
   p.nodes.dataInicio.value=today;p.nodes.dataFim.value=today;await p.nodes.formRelatorio.fire('submit');p.nodes.buscarAluno.value=token;await p.nodes.buscarAluno.fire('input');const beforeSearch=calls;await p.flush();await new Promise(resolve=>setTimeout(resolve,50));assert.ok(calls>beforeSearch);assert.match(p.nodes.tabelaCorpo.textContent,new RegExp(token));
   console.log('Relatórios: totais, vigência, contagem por aluno, filtros e atualização da tela confirmados no SQLite.');

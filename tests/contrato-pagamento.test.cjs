@@ -1,8 +1,8 @@
 'use strict';
 const assert=require('node:assert/strict');
 const Database=require('../backend/node_modules/better-sqlite3');
-const db=new Database(require('node:path').join(__dirname,'../backend/dev.db'));
-const api='http://localhost:3333/api';
+const db=new Database(process.env.PAGAMENTO_TEST_DB || require('node:path').join(__dirname,'../backend/dev.db'));
+const api=(process.env.PAGAMENTO_TEST_URL || 'http://localhost:3333')+'/api';
 async function request(path,method='GET',body){const response=await fetch(api+path,{method,headers:{'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});return {status:response.status,body:await response.json()};}
 const shift=(date,days)=>{const d=new Date(date+'T00:00:00Z');d.setUTCDate(d.getUTCDate()+days);return d.toISOString().slice(0,10);};
 async function main(){
@@ -11,14 +11,21 @@ async function main(){
   let aluno;for(let i=0;i<10;i++){const cpf=String(Math.floor(Math.random()*1e11)).padStart(11,'0');const r=await request('/alunos','POST',{nome:'Teste Pagamento Contrato',cpf});if(r.status===201){aluno=r.body;break;}}
   assert.ok(aluno);alunoId=aluno.id;
   const hoje=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
-  async function criar(situacao,inicio,fim){const r=await request('/financeiro','POST',{alunoId,plano:'Mensal',valor:120,dataInicio:inicio,dataFim:fim,situacao});assert.equal(r.status,201);return r.body;}
+  async function criar(situacao,inicio,fim,plano='Mensal'){const r=await request('/financeiro','POST',{alunoId,plano,valor:120,dataInicio:inicio,dataFim:fim,situacao});assert.equal(r.status,201);return r.body;}
   async function pagar(contrato,extra={}){const r=await request('/financeiro/'+contrato.id,'PUT',{statusPagamento:'Pago',dataPagamento:hoje,...extra});assert.equal(r.status,200);assert.equal(r.body.statusPagamento,'Pago');assert.equal(r.body.id,contrato.id);assert.equal(r.body.aluno.id,alunoId);return r.body;}
   for(const situacao of ['A Iniciar','Vencido']){
    const c=await criar(situacao,hoje,shift(hoje,30)),r=await pagar(c);assert.equal(r.situacao,'Vigente');assert.equal(db.prepare('SELECT situacao FROM Contrato WHERE id=?').get(c.id).situacao,'Vigente');
   }
   const futuro=await criar('A Iniciar',shift(hoje,1),shift(hoje,30));assert.equal((await pagar(futuro)).situacao,'A Iniciar');
-  const vencido=await criar('Vencido',shift(hoje,-30),shift(hoje,-1));assert.equal((await pagar(vencido)).situacao,'Vencido');
-  const expiraHoje=await criar('Vencido',shift(hoje,-30),hoje);assert.equal((await pagar(expiraHoje)).situacao,'Vencido');
+  for(const [plano,meses] of [['Mensal',1],['Trimestral',3],['Anual',12]]){
+   const vencido=await criar('Vencido',shift(hoje,-120),shift(hoje,-90),plano),pago=await pagar(vencido);
+   const fim=new Date(hoje+'T00:00:00Z'),dia=fim.getUTCDate();fim.setUTCDate(1);fim.setUTCMonth(fim.getUTCMonth()+meses);fim.setUTCDate(Math.min(dia,new Date(Date.UTC(fim.getUTCFullYear(),fim.getUTCMonth()+1,0)).getUTCDate()));
+   assert.equal(pago.situacao,'Vigente');assert.equal(pago.dataFim,fim.toISOString());
+   const salvo=db.prepare('SELECT situacao, dataFim FROM Contrato WHERE id=?').get(vencido.id);assert.equal(salvo.situacao,'Vigente');assert.equal(new Date(salvo.dataFim).getTime(),fim.getTime());
+   assert.equal((await pagar(pago)).dataFim,pago.dataFim);
+  }
+  const vigente=await criar('Vigente',shift(hoje,-10),shift(hoje,20));assert.equal((await pagar(vigente)).dataFim,vigente.dataFim);
+  const expiraHoje=await criar('Vencido',shift(hoje,-30),hoje);assert.equal((await pagar(expiraHoje)).situacao,'Vigente');
   const cancelado=await criar('Cancelado',shift(hoje,-1),shift(hoje,30));assert.equal((await pagar(cancelado,{situacao:'Ativo'})).situacao,'Cancelado');
   const cancelamento=await criar('Ativo',shift(hoje,-1),shift(hoje,30));assert.equal((await pagar(cancelamento,{situacao:'Cancelado'})).situacao,'Cancelado');
   const renovado=await criar('Vencido',shift(hoje,-30),shift(hoje,-1));assert.equal((await pagar(renovado,{dataFim:shift(hoje,30)})).situacao,'Vigente');

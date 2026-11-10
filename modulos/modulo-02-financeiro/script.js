@@ -86,13 +86,14 @@ function review(){
  list.replaceChildren();
  if(!student){$('review-hint').textContent='Selecione um aluno para conferir o contrato.';return;}
  const v=values(),c=baseline.contract,p=baseline.payment;
+ const planoRenovacao=mode==='payment'&&v.status==='Pago'&&contractLabel(c)==='Vencido'?D.plans.find(plan=>plan.name.toLowerCase()===c.planName.toLowerCase()):null;
  $('review-hint').textContent=c?'Os itens destacados mostram o que será alterado. Nada é salvo até confirmar.':'Confira os dados. O contrato e a cobrança serão criados ao confirmar.';
  summaryItem(list,'Aluno',student.name+' • '+student.matricula);
  summaryItem(list,'Plano',c&&selectedPlan===c.planId?c.planName:D.plan(selectedPlan).name,c?.planName);
  summaryItem(list,'Valor',D.money(c&&selectedPlan===c.planId?c.amount:D.plan(selectedPlan).price),p?D.money(p.amount):undefined);
  summaryItem(list,'Início',D.formatDate(v.start),c?D.formatDate(c.start):undefined);
- summaryItem(list,'Vencimento',D.formatDate(v.due),c?D.formatDate(c.due):undefined);
- summaryItem(list,'Situação administrativa',v.state,c?.state);
+ summaryItem(list,'Vencimento',D.formatDate(planoRenovacao?D.addMonths(D.today(),planoRenovacao.months):v.due),c?D.formatDate(c.due):undefined);
+ summaryItem(list,'Situação administrativa',planoRenovacao?'Vigente':v.state,c?.state);
  summaryItem(list,'Forma de pagamento',v.method,p?.method);
  summaryItem(list,'Pagamento',v.status,p?paymentLabel(c,p):undefined);
  summaryItem(list,'Recebimento',v.status==='Pago'?D.formatDate(v.paidDate):'—',p?D.formatDate(p.paidDate):undefined);
@@ -123,7 +124,7 @@ function loadStudent(preserveSearch=false){
  $('operation-kicker').textContent=mode==='new'?'Novo contrato':mode==='payment'?'Atualizar cobrança':'Editar registro';
  $('operation-title').textContent=mode==='new'?'Cadastrar contrato e pagamento':mode==='payment'?'Registrar pagamento':'Editar contrato e pagamento';
  $('payment-legend').textContent='Pagamento';
- $('contract-hint').textContent=mode==='payment'?'Esta operação altera somente o pagamento. Plano, valor e datas do contrato são preservados.':
+ $('contract-hint').textContent=mode==='payment'?'Ao marcar como Pago, contratos vencidos são renovados por um período do plano a partir de hoje. Contratos vigentes mantêm suas datas.':
  c?'Alterações no contrato e pagamento serão aplicadas ao salvar.':
  student?'Este aluno ainda não possui contrato. Preencha os dados e salve para contratar um plano.':
  students.length?'Selecione um aluno já cadastrado para contratar um plano.':'Cadastre um aluno ativo em Gestão de Cadastros antes de criar um contrato.';
@@ -192,11 +193,11 @@ function render(){
  $('pagamentos-pendentes').textContent=pending.length;$('receita-prevista').textContent=D.money(pending.reduce((sum,p)=>sum+p.amount,0));
  const body=$('tabelaDados');body.replaceChildren();actionTargets.clear();
  $('result-count').textContent=rows.length+' registro(s) · Contratos por alteração mais recente';
- if(!rows.length){D.empty(body,6,$('filtro-erro').textContent?'Corrija o intervalo de vencimento para consultar.':state.students.length?'Nenhum aluno encontrado. Ajuste a busca ou limpe os filtros.':'Nenhum aluno cadastrado. Comece em Gestão de Cadastros.');return;}
+ if(!rows.length){D.empty(body,7,$('filtro-erro').textContent?'Corrija o intervalo de vencimento para consultar.':state.students.length?'Nenhum aluno encontrado. Ajuste a busca ou limpe os filtros.':'Nenhum aluno cadastrado. Comece em Gestão de Cadastros.');return;}
  for(const{s,c,p}of rows.slice((pagina-1)*POR_PAGINA,pagina*POR_PAGINA)){
   const row=el('tr',undefined,'record-row');row.setAttribute('data-student-id',s.id);
   const name=el('div');name.append(el('span',s.name,'record-name'),el('span','Matrícula '+s.matricula+(D.isActiveStudent(s)?'':' · Cadastro inativo'),'record-id'));
-  rowCell(row,'Aluno',name);rowCell(row,'Contrato',badge(contractLabel(c)));rowCell(row,'Pagamento',badge(paymentLabel(c,p)));
+  rowCell(row,'Aluno',name);rowCell(row,'CPF',D.cpfText(s.cpf||'')||'—');rowCell(row,'Contrato',badge(contractLabel(c)));rowCell(row,'Pagamento',badge(paymentLabel(c,p)));
   rowCell(row,'Vencimento',D.formatDate(c?.due));rowCell(row,'Valor',p?D.money(p.amount):'—');
   const actions=el('div',undefined,'record-actions');
   if(c){
@@ -205,7 +206,7 @@ function render(){
    if(c.state!=='Cancelado')actions.append(action(c.state==='Suspenso'?'Reativar':'Suspender','manage',c.id,manageContract));
   }else if(D.isActiveStudent(s))actions.append(action('Cadastrar contrato','new',s.id,(id,key)=>openOperation('new',id,key),'btn btn-small btn-primary'));
   const detail=el('tr',undefined,'record-detail');detail.id='detalhes-'+(c?.id||s.id);detail.hidden=!expanded.has(c?.id||s.id);
-  const detailCell=D.cell(detail,'');detailCell.colSpan=6;const list=el('dl',undefined,'summary-grid');
+  const detailCell=D.cell(detail,'');detailCell.colSpan=7;const list=el('dl',undefined,'summary-grid');
   summaryItem(list,'Plano',c?c.planName:'Sem contrato');summaryItem(list,'Início',D.formatDate(c?.start));
   summaryItem(list,'Situação administrativa',c?.state||'—');summaryItem(list,'Forma de pagamento',p?.method||'—');
   summaryItem(list,'Quitação',D.formatDate(p?.paidDate));summaryItem(list,'Tolerância',c?c.tolerance+' dia(s)':'—');

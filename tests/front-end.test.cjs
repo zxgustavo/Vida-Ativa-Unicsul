@@ -101,7 +101,7 @@ function page(file,storage=new Map(),fetchOverride,sessionProfile='admin',sessio
  };
  if(file==='modulos/modulo-06-relatorios/index.html')sandbox.fetch=async(url,options={})=>{
   apiCalls.push({url,method:options.method||'GET'});const params=new URL(String(url)).searchParams;
-  const alunos=[{id:'1111',nome:'Lucas Andrade',matricula:'1111',dataCadastro:'2026-10-05',ativo:true,contratos:[{id:'c-1111',plano:'Mensal',valor:120,situacaoAtual:'Vigente'}]}];
+  const alunos=[{id:'1111',nome:'Lucas Andrade',matricula:'1111',cpf:'52998224725',dataCadastro:'2026-10-05',ativo:true,contratos:[{id:'c-1111',plano:'Mensal',valor:120,situacaoAtual:'Vigente'}]}];
   const matches=alunos.filter(a=>a.dataCadastro>=params.get('dataInicio')&&a.dataCadastro<=params.get('dataFim')&&(!params.get('busca')||a.nome.toLowerCase().includes(params.get('busca').toLowerCase())||a.matricula.includes(params.get('busca')))&&(params.get('situacao')==='todos'||a.contratos.some(c=>c.situacaoAtual===params.get('situacao'))));
   return {ok:true,status:200,json:async()=>({periodo:{dataInicio:params.get('dataInicio'),dataFim:params.get('dataFim')},totais:{alunos:3,alunosAtivos:2,receitaPrevista:120,avaliacoesMes:1,avaliacoesPeriodo:params.get('dataInicio').startsWith('2099')?0:1,alunosVencidos:1,alunosAIniciar:0},alunos:matches})};
  };
@@ -370,7 +370,7 @@ test('Histórico de liberações filtra datas e situação e usa etiquetas semâ
  {studentId:'1111',type:'entrada',actor:'Admin',createdAt:'2026-10-08T15:00:00Z',expiresAt:'2026-10-09T15:00:00Z',usedAt:'2026-10-08T15:01:00Z',reason:'Utilizada no teste'},
  {studentId:'2222',type:'entrada',actor:'Admin',createdAt:'2026-10-07T15:00:00Z',expiresAt:'2026-10-09T15:00:00Z',usedAt:null,reason:'Pendente no teste'},
  {studentId:'3333',type:'entrada',actor:'Admin',createdAt:'2026-10-06T15:00:00Z',expiresAt:'2026-10-07T15:00:00Z',usedAt:null,reason:'Expirada no teste'}];});
- const p=page('modulos/modulo-04-auditoria/index.html',storage),body=p.nodes['historico-liberacoes'];assert.equal(body.children.length,3);assert.equal(body.children[0].children[6].children[0].className,'badge ok');assert.equal(body.children[1].children[6].children[0].className,'badge warn');assert.equal(body.children[2].children[6].children[0].className,'badge danger');
+ const p=page('modulos/modulo-04-auditoria/index.html',storage),body=p.nodes['historico-liberacoes'];assert.equal(body.children.length,3);assert.equal(body.children[0].children[7].children[0].className,'badge ok');assert.equal(body.children[1].children[7].children[0].className,'badge warn');assert.equal(body.children[2].children[7].children[0].className,'badge danger');
  p.nodes.filtroSituacao.value='nao-utilizada';await p.nodes.filtroSituacao.fire('change');assert.equal(body.children.length,2);assert.match(body.textContent,/Pendente/);assert.match(body.textContent,/Expirada/);
  p.nodes.filtroInicio.value='2026-10-07';p.nodes.filtroFim.value='2026-10-07';await p.nodes.filtroInicio.fire('change');assert.equal(body.children.length,1);assert.match(body.textContent,/Mariana Lima/);p.nodes.filtroAluno.value='Lucas';await p.nodes.filtroAluno.fire('input');assert.match(body.textContent,/Nenhuma liberação/);
  p.nodes.filtroAluno.value='';p.nodes.filtroInicio.value='2026-10-08';await p.nodes.filtroInicio.fire('change');assert.match(p.nodes['filtro-periodo-feedback'].textContent,/período válido/);p.nodes.filtroInicio.value='';p.nodes.filtroFim.value='';p.nodes.filtroSituacao.value='utilizada';await p.nodes.filtroSituacao.fire('change');assert.equal(body.children.length,1);assert.match(body.textContent,/Utilizada/);assert.equal(p.nodes['filtro-periodo-feedback'].textContent,'');
@@ -450,7 +450,7 @@ test('Pagamento isolado rejeita dados inválidos e ausência de cobrança sem gr
   assert.throws(()=>D.savePayment(values));assert.equal(JSON.stringify(D.getState()),before);
  }
 });
-test('Tela de pagamento altera apenas a cobrança e classifica atraso automaticamente',async()=>{
+test('Tela de pagamento envia os campos da cobrança e classifica atraso automaticamente',async()=>{
  const p=page('modulos/modulo-02-financeiro/index.html');await p.ready;const before=clone(p.D.getState());
  await financeAction(p,'3333','payment').fire('click');
  assert.equal(p.nodes['contract-fields'].hidden,true);assert.equal(p.nodes['operation-title'].textContent,'Registrar pagamento');
@@ -459,6 +459,7 @@ test('Tela de pagamento altera apenas a cobrança e classifica atraso automatica
  assert.equal(p.D.payment(p.D.getState(),'c-3333').status,'Atrasado');
  p.nodes.status.value='Pago';await p.nodes.status.fire('change');p.nodes.dataPagamento.value='2026-10-08';await p.nodes.formFinanceiro.fire('submit');
  assert.equal(p.D.payment(p.D.getState(),'c-3333').status,'Pago');assert.deepEqual(p.D.getState().contracts,before.contracts);
+ assert.deepEqual(Object.keys(p.apiCalls.filter(call=>call.method==='PUT').at(-1).data).sort(),['dataPagamento','formaPagamento','statusPagamento']);
  assert.match(p.nodes.feedback.textContent,/Pagamento salvo/);
 });
 test('Edição destaca mudanças no resumo e abre ajustes que contêm erros',async()=>{
@@ -511,7 +512,7 @@ test('Relatórios enviam filtros e limpar volta a consultar a API',async()=>{
  p.nodes.dataInicio.value='2026-11-02';p.nodes.dataFim.value='2026-11-01';await p.nodes.formRelatorio.fire('submit');assert.match(p.nodes.feedback.textContent,/período válido/);assert.equal(p.nodes['total-alunos'].textContent,'—');
 });
 test('Busca do relatório usa apenas período e situação já aplicados',async()=>{
- const p=page('modulos/modulo-06-relatorios/index.html');await p.ready;assert.equal(p.nodes.tabelaCorpo.children[0].children[2].textContent,'05/10/2026');
+ const p=page('modulos/modulo-06-relatorios/index.html');await p.ready;assert.equal(p.nodes.tabelaCorpo.children[0].children[3].textContent,'05/10/2026');
  p.nodes.status.value='Vencido';p.nodes.dataInicio.value='2099-01-01';p.nodes.dataFim.value='2099-01-02';p.nodes.buscarAluno.value='Lucas';await p.nodes.buscarAluno.fire('input');await p.flush();
  let params=new URL(p.apiCalls.at(-1).url).searchParams;assert.equal(params.get('situacao'),'todos');assert.equal(params.get('dataInicio'),'2026-10-01');assert.match(p.nodes.tabelaCorpo.textContent,/Lucas/);
  await p.nodes.formRelatorio.fire('submit');params=new URL(p.apiCalls.at(-1).url).searchParams;assert.equal(params.get('situacao'),'Vencido');assert.equal(params.get('dataInicio'),'2099-01-01');assert.match(p.nodes.tabelaCorpo.textContent,/Nenhum aluno/);assert.equal(p.nodes['avaliacoes-periodo'].textContent,'0');
@@ -563,5 +564,24 @@ test('Financeiro comunica indisponibilidade da API sem carregar dados de demonst
  const p=page('modulos/modulo-02-financeiro/index.html',new Map(),async()=>{throw new Error('offline');});await p.ready;
  assert.match(p.nodes['page-feedback'].textContent,/conectar à API/);assert.equal(financeRows(p).length,0);
 });
+
+test('CPF aparece formatado em todas as tabelas com busca por CPF',async()=>{
+ const f=page('modulos/modulo-02-financeiro/index.html');await f.ready;
+ f.nodes.busca.value='529.982.247-25';await f.nodes.busca.fire('input');
+ const fr=financeRows(f);assert.equal(fr.length,1);assert.match(fr[0].children[1].textContent,/529\.982\.247-25/);assert.equal(fr[0].children.length,7);
+ const detail=f.nodes.tabelaDados.children.find(n=>n.className==='record-detail');assert.equal(detail.children[0].colSpan,7);
+ f.nodes.busca.value='inexistente';await f.nodes.busca.fire('input');assert.equal(f.nodes.tabelaDados.children[0].children[0].colSpan,7);
+ const r=page('modulos/modulo-06-relatorios/index.html');await r.ready;
+ assert.equal(r.nodes.tabelaCorpo.children[0].children[2].textContent,'529.982.247-25');assert.equal(r.nodes.tabelaCorpo.children[0].children.length,8);
+ r.nodes.buscarAluno.value='inexistente';await r.nodes.buscarAluno.fire('input');await r.flush();assert.equal(r.nodes.tabelaCorpo.children[0].children[0].colSpan,8);
+ const c=page('modulos/modulo-01-cadastros/index.html');await c.ready;c.nodes.buscarAluno.value='52998224725';await c.nodes.buscarAluno.fire('input');
+ assert.equal(c.nodes['lista-alunos'].children.length,1);assert.equal(c.nodes['lista-alunos'].children[0].children[2].textContent,'529.982.247-25');
+ const storage=new Map(),{D}=model(storage);D.transaction(state=>{state.authorizations=[{studentId:'1111',type:'entrada',actor:'Admin',createdAt:'2026-10-08T15:00:00Z',expiresAt:'2026-10-09T15:00:00Z',usedAt:null,reason:'Teste CPF'}];});
+ const a=page('modulos/modulo-04-auditoria/index.html',storage);a.nodes.filtroAluno.value='529.982.247-25';await a.nodes.filtroAluno.fire('input');
+ assert.equal(a.nodes['historico-liberacoes'].children[0].children[1].textContent,'529.982.247-25');assert.equal(a.nodes['historico-liberacoes'].children[0].children.length,8);
+ a.nodes.filtroAluno.value='inexistente';await a.nodes.filtroAluno.fire('input');assert.equal(a.nodes['historico-liberacoes'].children[0].children[0].colSpan,8);
+ for(const module of ['modulo-01-cadastros','modulo-02-financeiro','modulo-04-auditoria','modulo-05-avaliacao','modulo-06-relatorios'])assert.match(fs.readFileSync(path.join(root,'modulos',module,'index.html'),'utf8'),/<th scope="col">CPF<\/th>/);
+});
+
 async function run(){const results=[];for(const entry of cases){try{await entry.fn();results.push({cenario:entry.name,passou:true});}catch(e){results.push({cenario:entry.name,passou:false,erro:e.stack});}}const report={data:'2026-11-07',metodo:'Regras locais reais em VM, inicialização de controladores em DOM mínimo, interação com as buscas de alunos, consistência do tema e cálculo de contraste das cores CSS; inspeção de navegador registrada separadamente.',total:results.length,aprovados:results.filter(r=>r.passou).length,resultados:results};return report;}
 module.exports={run,page,answerDialog,descendants};if(require.main===module)run().then(report=>{for(const r of report.resultados)console.log((r.passou?'PASS ':'FAIL ')+r.cenario+(r.passou?'':'\n'+r.erro));console.log(report.aprovados+'/'+report.total+' cenários passaram.');if(report.aprovados!==report.total)process.exitCode=1;}).catch(error=>{console.error(error);process.exitCode=1;});

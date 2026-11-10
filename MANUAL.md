@@ -90,6 +90,16 @@ Os comandos abaixo usam PowerShell e criam o SQLite local na primeira execução
 
 O módulo Liberação e Auditoria ainda utiliza dados locais de demonstração e não libera acessos na Portaria real. O sistema não aciona catracas nem processa pagamentos bancários.
 
+## Pagamento e renovação
+
+Em **Registrar pagamento**, marcar um contrato vencido como **Pago** renova sua validade a partir do dia atual em São Paulo: **1 mês** no Mensal, **3 meses** no Trimestral e **12 meses** no Anual. Quando o mês de destino não possui o mesmo dia, usa-se seu último dia. O resumo antecipa o novo vencimento; após salvar, a tabela e os indicadores são recarregados e o contrato aparece como **Vigente**.
+
+O pagamento de um contrato vigente mantém suas datas. Contratos suspensos ou cancelados não são liberados pelo pagamento. Datas alteradas explicitamente em **Editar contrato e pagamento** são respeitadas. Reenviar o pagamento de um contrato já renovado não acrescenta outro período.
+
+As tabelas de Cadastros, Financeiro, Auditoria, Avaliação e Relatórios exibem CPF formatado para conferir os resultados das buscas.
+
 ## Verificações
 
 Na raiz, execute `node tests/front-end.test.cjs`. Os testes de integração em `tests/*-integration.test.cjs` e `tests/contrato-pagamento.test.cjs` exigem a API ligada na porta 3333; eles criam e removem registros próprios no SQLite local e devem ser executados sequencialmente.
+
+Para verificar a renovação sem uma API ligada, após instalar as dependências do backend, execute `node --test tests/contrato-renovacao.test.cjs`. A suíte executa o serviço real com repositórios em memória e testa também a atualização da tela; ela não substitui a integração com Prisma/SQLite. O teste `contrato-pagamento.test.cjs` aceita `PAGAMENTO_TEST_URL` e `PAGAMENTO_TEST_DB` para apontar a uma API e base descartáveis.

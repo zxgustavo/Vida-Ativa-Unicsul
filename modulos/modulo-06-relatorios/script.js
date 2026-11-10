@@ -7,7 +7,7 @@ let version=0,timer,pagina=1,reportData=null,aplicados=null;
 const POR_PAGINA=10;
 D.initPage({bootstrap:false});
 function padrao(){$('dataInicio').value=D.today().slice(0,7)+'-01';$('dataFim').value=D.today();$('status').value='todos';$('buscarAluno').value='';}
-function clearResults(message){reportData=null;pagina=1;for(const id of indicadores)$(id).textContent='—';D.empty($('tabelaCorpo'),7,message);$('mensagemInfo').textContent='';$('report-caption').textContent='Contratos por aluno';$('relatorios-pagina').textContent='Página 1 de 1';$('relatorios-anterior').disabled=true;$('relatorios-proxima').disabled=true;}
+function clearResults(message){reportData=null;pagina=1;for(const id of indicadores)$(id).textContent='—';D.empty($('tabelaCorpo'),8,message);$('mensagemInfo').textContent='';$('report-caption').textContent='Contratos por aluno';$('relatorios-pagina').textContent='Página 1 de 1';$('relatorios-anterior').disabled=true;$('relatorios-proxima').disabled=true;}
 function render(data){
  reportData=data;
  const t=data.totais;
@@ -18,9 +18,9 @@ function render(data){
  const paginas=Math.max(1,Math.ceil(rows.length/POR_PAGINA));pagina=Math.min(pagina,paginas);
  $('relatorios-pagina').textContent='Página '+pagina+' de '+paginas;$('relatorios-anterior').disabled=pagina===1;$('relatorios-proxima').disabled=pagina===paginas;
  $('report-caption').textContent='Cadastros de '+D.formatDate(data.periodo.dataInicio)+' a '+D.formatDate(data.periodo.dataFim);
- if(!data.alunos.length){D.empty(body,7,'Nenhum aluno encontrado para os filtros selecionados.');return;}
+ if(!data.alunos.length){D.empty(body,8,'Nenhum aluno encontrado para os filtros selecionados.');return;}
  for(const {aluno,c} of rows.slice((pagina-1)*POR_PAGINA,pagina*POR_PAGINA)){
-  const row=document.createElement('tr');D.cell(row,aluno.matricula);D.cell(row,aluno.nome);D.cell(row,D.formatDate(aluno.dataCadastro));D.cell(row,aluno.ativo?'Ativo':'Inativo');D.cell(row,c?.plano||'—');
+  const row=document.createElement('tr');D.cell(row,aluno.matricula);D.cell(row,aluno.nome);D.cell(row,D.cpfText(aluno.cpf||'')||'—');D.cell(row,D.formatDate(aluno.dataCadastro));D.cell(row,aluno.ativo?'Ativo':'Inativo');D.cell(row,c?.plano||'—');
    const label=c?.situacaoAtual||'Sem contrato',tone=label==='Vigente'?'ok':['Vencido','A iniciar','Suspenso'].includes(label)?'warn':label==='Sem contrato'?'neutral':'danger';
    D.cell(row,D.badge(label,tone));D.cell(row,c?D.money(Math.round(c.valor*100)):'—');body.append(row);
  }

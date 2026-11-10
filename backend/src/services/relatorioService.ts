@@ -59,7 +59,7 @@ export const relatorioService = {
       const filtrados = situacao === "todos" ? todos : todos.filter(c => c.situacaoAtual === situacao);
       if (situacao !== "todos" && situacao !== "Sem contrato" && !filtrados.length) return [];
       if (situacao === "Sem contrato" && todos.length) return [];
-      return [{ id: a.id, nome: a.nome, matricula: a.matricula, ativo: a.ativo, dataCadastro: dataLocal.format(a.criadoEm), contratos: filtrados }];
+      return [{ id: a.id, nome: a.nome, matricula: a.matricula, cpf: a.cpf, ativo: a.ativo, dataCadastro: dataLocal.format(a.criadoEm), contratos: filtrados }];
     });
     return { periodo: { dataInicio: inicio, dataFim: fim }, totais: { alunos: alunos.length, alunosAtivos: alunos.filter(a => a.ativo).length, receitaPrevista, avaliacoesMes, avaliacoesPeriodo, alunosVencidos: vencidos.size, alunosAIniciar: aIniciar.size }, alunos: resultados };
   },
