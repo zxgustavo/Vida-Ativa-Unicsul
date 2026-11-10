@@ -21,6 +21,54 @@ function validateCpf(){const value=$('cpf').value,duplicate=alunos.some(s=>s.id!
 function validatePhone(id){const input=$(id);input.setCustomValidity(input.value&&!D.validPhone(input.value)?'Informe um telefone válido com DDD e 10 ou 11 dígitos.':'');}
 function validateText(id){const input=$(id),length=input.value.trim().length;input.setCustomValidity(input.value&&length<(id==='nome'?3:1)?'Preencha este campo com informações válidas.':'');}
 function validateBirth(){const input=$('dataNascimento');input.setCustomValidity(input.value&&(!D.date(input.value)||input.value>D.today())?'Informe uma data de nascimento válida.':'');}
+const conectivosNome=new Set(['da','de','do','dos','das','e']);
+function formatName(id){
+ const input=$(id),value=input.value.normalize('NFC').trim().replace(/\s+/g,' ').toLocaleLowerCase('pt-BR')
+  .replace(/\p{L}[\p{L}\p{M}]*/gu,word=>conectivosNome.has(word)?word:word[0].toLocaleUpperCase('pt-BR')+word.slice(1));
+ if(input.value!==value){input.value=value;window.demoDirty=true;}
+ validateText(id);if(id==='nome')preview();
+}
+function maskedNumber(value,phone){
+ const digits=D.digits(value).slice(0,11);
+ if(!digits)return '';
+ if(!phone)return digits.slice(0,3)+(digits.length>3?'.'+digits.slice(3,6):'')+(digits.length>6?'.'+digits.slice(6,9):'')+(digits.length>9?'-'+digits.slice(9):'');
+ if(digits.length<=2)return '('+digits;
+ const split=digits.length===11?7:6;
+ return '('+digits.slice(0,2)+') '+digits.slice(2,split)+(digits.length>split?'-'+digits.slice(split):'');
+}
+function maskInput(id,event={}){
+ if(event.isComposing)return;
+ const input=$(id),raw=input.value,start=input.selectionStart,end=input.selectionEnd;
+ const value=maskedNumber(raw,id!=='cpf');
+ if(value!==raw){
+  input.value=value;
+  // Mantém a seleção pela posição dos dígitos, mesmo quando a pontuação muda.
+  if(typeof start==='number'&&typeof end==='number'){
+   const position=offset=>{let remaining=D.digits(raw.slice(0,offset)).length;if(!remaining)return Math.max(0,value.search(/\d/));for(let i=0;i<value.length;i++)if(/\d/.test(value[i])&&!--remaining)return i+1;return value.length;};
+   let nextStart=position(start),nextEnd=position(end);
+   if(start===end&&event.inputType==='deleteContentForward'){while(nextStart<value.length&&!/\d/.test(value[nextStart]))nextStart++;nextEnd=nextStart;}
+   input.setSelectionRange(nextStart,nextEnd);
+  }
+ }
+ if(id==='cpf')validateCpf();else validatePhone(id);
+}
+function bindMask(id){
+ const input=$(id);
+ input.addEventListener('input',event=>maskInput(id,event));
+ input.addEventListener('blur',()=>maskInput(id));
+ input.addEventListener('compositionend',()=>maskInput(id));
+ input.addEventListener('beforeinput',event=>{
+  const backward=event.inputType==='deleteContentBackward',forward=event.inputType==='deleteContentForward';
+  if(!event.cancelable||event.isComposing||(!backward&&!forward)||input.selectionStart!==input.selectionEnd)return;
+  let index=input.selectionStart-(backward?1:0);
+  if(index<0||index>=input.value.length||/\d/.test(input.value[index]))return;
+  // Backspace/Delete junto de um separador apaga o dígito vizinho, sem prender o cursor.
+  while(index>=0&&index<input.value.length&&!/\d/.test(input.value[index]))index+=backward?-1:1;
+  if(index<0||index>=input.value.length)return;
+  event.preventDefault();input.value=input.value.slice(0,index)+input.value.slice(index+1);input.setSelectionRange(index,index);
+  input.dispatchEvent(new Event('input',{bubbles:true}));
+ });
+}
 function renderList(){
  const active=alunos.filter(s=>s.ativo),students=active.filter(s=>D.studentMatches({id:s.matricula,name:s.nome,cpf:s.cpf},$('buscarAluno').value));
  const paginas=Math.max(1,Math.ceil(students.length/POR_PAGINA));pagina=Math.min(pagina,paginas);
@@ -83,10 +131,9 @@ $('arquivar').addEventListener('click',async()=>{
 });
 $('nome').addEventListener('input',preview);$('removerFoto').addEventListener('change',()=>{if($('removerFoto').checked){photoVersion++;photoPending=false;$('salvar').disabled=false;$('foto').value='';$('foto').setCustomValidity('');photoData=alunos.find(s=>s.id===currentId)?.foto||'';}preview();});
 $('temRestricoes').addEventListener('change',syncRestrictions);
-$('cpf').addEventListener('input',validateCpf);
-$('cpf').addEventListener('blur',()=>{$('cpf').value=D.cpfText($('cpf').value);validateCpf();});
+['cpf','telefone','telEmergencia'].forEach(bindMask);
 $('dataNascimento').addEventListener('input',validateBirth);
-['telefone','telEmergencia'].forEach(id=>{$(id).addEventListener('input',()=>validatePhone(id));$(id).addEventListener('blur',()=>{$(id).value=D.phoneText($(id).value);validatePhone(id);});});
+['nome','nomeEmergencia'].forEach(id=>$(id).addEventListener('blur',()=>formatName(id)));
 ['nome','endereco','nomeEmergencia','restricoes'].forEach(id=>$(id).addEventListener('input',()=>validateText(id)));
 $('foto').addEventListener('change',async()=>{
  const version=++photoVersion;photoPending=true;$('salvar').disabled=true;$('foto').setCustomValidity('');
@@ -96,7 +143,7 @@ $('foto').addEventListener('change',async()=>{
 });
 form.addEventListener('reset',()=>{form.classList.remove('was-validated');if(!resetInterno)setTimeout(()=>load(),0);});
 form.addEventListener('submit',async event=>{
- event.preventDefault();if(photoPending){D.feedback(feedback,'Aguarde o carregamento da foto.',true);return;}validateCpf();validateBirth();for(const id of ['telefone','telEmergencia'])validatePhone(id);for(const id of ['nome','endereco','nomeEmergencia','restricoes'])validateText(id);if(!form.reportValidity())return;
+ event.preventDefault();if(photoPending){D.feedback(feedback,'Aguarde o carregamento da foto.',true);return;}['nome','nomeEmergencia'].forEach(formatName);['cpf','telefone','telEmergencia'].forEach(id=>maskInput(id));validateBirth();for(const id of ['nome','endereco','nomeEmergencia','restricoes'])validateText(id);if(!form.reportValidity())return;
  const save=$('salvar');save.disabled=true;
  try{
   const student={nome:$('nome').value.trim(),cpf:D.digits($('cpf').value),dataNascimento:$('dataNascimento').value,telefone:D.digits($('telefone').value),endereco:$('endereco').value.trim(),nomeEmergencia:$('nomeEmergencia').value.trim(),telefoneEmergencia:D.digits($('telEmergencia').value),restricoesMedicas:$('temRestricoes').value==='nao'?'Nenhuma restrição informada.':$('restricoes').value.trim(),observacoes:$('anotacoes').value.trim(),foto:$('removerFoto').checked?'':photoData};

@@ -583,5 +583,44 @@ test('CPF aparece formatado em todas as tabelas com busca por CPF',async()=>{
  for(const module of ['modulo-01-cadastros','modulo-02-financeiro','modulo-04-auditoria','modulo-05-avaliacao','modulo-06-relatorios'])assert.match(fs.readFileSync(path.join(root,'modulos',module,'index.html'),'utf8'),/<th scope="col">CPF<\/th>/);
 });
 
+
+test('Cadastros formata nomes no blur, preservando acentos e conectivos',async()=>{
+ const p=page('modulos/modulo-01-cadastros/index.html');await p.ready;
+ for(const [raw,expected] of [['  joao   da silva  ','Joao da Silva'],['JOÃO DE SOUZA E MARIA DAS DORES','João de Souza e Maria das Dores'],['JOSÉ DOS SANTOS DO VALE','José dos Santos do Vale'],["aNA-MARIA d'ÁVILA","Ana-Maria D'Ávila"],['jose\u0301 da silva','José da Silva']]){
+  p.nodes.nome.value=raw;await p.nodes.nome.fire('blur');assert.equal(p.nodes.nome.value,expected);
+ }
+ p.nodes.nomeEmergencia.value='mARIA da CONCEIÇÃO';await p.nodes.nomeEmergencia.fire('blur');assert.equal(p.nodes.nomeEmergencia.value,'Maria da Conceição');
+ assert.equal(p.sandbox.demoDirty,true);
+});
+test('CPF recebe máscara progressiva e mantém validação de dígitos e duplicidade',async()=>{
+ const p=page('modulos/modulo-01-cadastros/index.html');await p.ready;
+ for(const [digits,expected] of [['123','123'],['4','123.4'],['56','123.456'],['789','123.456.789'],['09','123.456.789-09'],['999','123.456.789-09']]){
+  p.nodes.cpf.value+=digits;await p.nodes.cpf.fire('input');assert.equal(p.nodes.cpf.value,expected);
+ }
+ assert.equal(p.nodes.cpf.validationMessage,'');
+ p.nodes.cpf.value='529.982.247-25';await p.nodes.cpf.fire('input');assert.match(p.nodes.cpf.validationMessage,/já está cadastrado/);
+ p.nodes.cpf.value='abc123';await p.nodes.cpf.fire('input');assert.equal(p.nodes.cpf.value,'123');assert.match(p.nodes.cpf.validationMessage,/CPF válido/);
+ p.nodes.cpf.value='';await p.nodes.cpf.fire('input');assert.equal(p.nodes.cpf.value,'');
+});
+test('Telefone e emergência alternam máscara de fixo e celular durante a digitação',async()=>{
+ const p=page('modulos/modulo-01-cadastros/index.html');await p.ready;
+ for(const id of ['telefone','telEmergencia']){
+  for(const [raw,expected] of [['1','(1'],['11','(11'],['113','(11) 3'],['113333','(11) 3333'],['1133334','(11) 3333-4'],['1133334444','(11) 3333-4444'],['11998765432','(11) 99876-5432'],['119987654321234','(11) 99876-5432'],['(11) 3333-4444','(11) 3333-4444'],['abc','']]){
+   p.nodes[id].value=raw;await p.nodes[id].fire('input');assert.equal(p.nodes[id].value,expected);
+  }
+ }
+});
+test('Cadastro e edição enviam nomes formatados e CPF/telefones sem pontuação, mesmo sem blur',async()=>{
+ const p=page('modulos/modulo-01-cadastros/index.html');await p.ready;
+ const fields={nome:'joao da silva',cpf:'12345678909',dataNascimento:'1990-01-01',telefone:'1133334444',endereco:'Rua Teste, 10',nomeEmergencia:'MARIA DOS SANTOS',telEmergencia:'11998765432',temRestricoes:'nao'};
+ for(const [id,value]of Object.entries(fields))p.nodes[id].value=value;
+ await p.nodes.formCadastro.fire('submit');
+ const created=p.apiCalls.find(c=>c.method==='POST');assert.ok(created);assert.equal(created.data.nome,'Joao da Silva');assert.equal(created.data.nomeEmergencia,'Maria dos Santos');assert.equal(created.data.cpf,'12345678909');assert.equal(created.data.telefone,'1133334444');assert.equal(created.data.telefoneEmergencia,'11998765432');
+ await descendants(p.nodes['lista-alunos']).find(n=>n.getAttribute('aria-label')==='Editar cadastro de Joao da Silva').fire('click');
+ assert.equal(p.nodes.cpf.value,'123.456.789-09');assert.equal(p.nodes.telefone.value,'(11) 3333-4444');assert.equal(p.nodes.telEmergencia.value,'(11) 99876-5432');
+ p.nodes.nome.value='joao de souza';p.nodes.telefone.value='21987654321';await p.nodes.telefone.fire('input');await p.nodes.formCadastro.fire('submit');
+ const updated=p.apiCalls.find(c=>c.method==='PUT');assert.ok(updated);assert.equal(updated.data.nome,'Joao de Souza');assert.equal(updated.data.telefone,'21987654321');assert.equal(updated.data.cpf,'12345678909');assert.match(p.nodes.feedback.textContent,/Cadastro atualizado/);
+});
+
 async function run(){const results=[];for(const entry of cases){try{await entry.fn();results.push({cenario:entry.name,passou:true});}catch(e){results.push({cenario:entry.name,passou:false,erro:e.stack});}}const report={data:'2026-11-07',metodo:'Regras locais reais em VM, inicialização de controladores em DOM mínimo, interação com as buscas de alunos, consistência do tema e cálculo de contraste das cores CSS; inspeção de navegador registrada separadamente.',total:results.length,aprovados:results.filter(r=>r.passou).length,resultados:results};return report;}
 module.exports={run,page,answerDialog,descendants};if(require.main===module)run().then(report=>{for(const r of report.resultados)console.log((r.passou?'PASS ':'FAIL ')+r.cenario+(r.passou?'':'\n'+r.erro));console.log(report.aprovados+'/'+report.total+' cenários passaram.');if(report.aprovados!==report.total)process.exitCode=1;}).catch(error=>{console.error(error);process.exitCode=1;});
