@@ -53,8 +53,11 @@
 .finance-records .card-heading { margin-bottom: 0; }
 .finance-records .table-wrap:focus-visible { outline-offset: 4px; }
 .finance-table th, .finance-table td { padding: 12px 10px; }
+.finance-table .finance-actions-cell { width: 1%; position: sticky; right: 0; z-index: 2; background-color: color-mix(in srgb, var(--surface), var(--bg) 18%); box-shadow: -6px 0 10px -6px rgb(0 0 0 / 50%); }
+.finance-table th.finance-actions-cell { z-index: 3; background-color: var(--surface-soft); }
+.finance-table .record-row:hover .finance-actions-cell { background-color: var(--surface-soft); }
 .cell-label { display: none; }
-.record-actions { display: flex; flex-wrap: nowrap; gap: 6px; }
+.record-actions { display: grid; grid-template-columns: repeat(2, max-content); gap: 6px; }
 .record-actions .btn { flex: 0 0 auto; padding: 7px 10px; font-size: 13px; }
 .record-name { font-weight: 600; display: block; }
 .record-id { font-size: 12px; color: var(--muted); display: block; margin-top: 4px; }
@@ -67,6 +70,7 @@
  .record-detail .summary-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
 }
 @media(max-width:620px) {
+ .record-actions { grid-template-columns: max-content; }
  .finance-stats { gap: 8px; grid-template-columns: repeat(3,minmax(0,1fr)); }
  .finance-stats .stat { padding: 10px; }
  .finance-stats .stat-label { font-size: 12px; }

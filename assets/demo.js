@@ -76,7 +76,7 @@ function badge(text,tone){const span=global.document.createElement('span');span.
 function cell(row,text){const td=global.document.createElement('td');if(text?.nodeType)td.append(text);else td.textContent=String(text??'—');row.append(td);return td;}
 function empty(body,columns,message){body.replaceChildren();const row=global.document.createElement('tr');const td=cell(row,message);td.colSpan=columns;td.className='empty';body.append(row);}
 function studentMatches(student,query){const q=String(query||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();if(!q)return true;const name=String(student.name||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();const numeric=digits(query);return name.includes(q)||String(student.matricula||student.id).includes(q)||(numeric.length>0&&digits(student.cpf).includes(numeric));}
-function createStudentPicker({input,results,value,getStudents=()=>read().students.filter(isActiveStudent),onSelect=()=>{},onClear=()=>{},beforeClear=()=>true,limit=8}){
+function createStudentPicker({input,results,value,getStudents=()=>read().students.filter(isActiveStudent),formatSelection=student=>student.name+' • '+(student.matricula||student.id),onSelect=()=>{},onClear=()=>{},beforeClear=()=>true,limit=8}){
  const close=()=>{results.hidden=true;input.setAttribute('aria-expanded','false');};
  function render(){
   results.replaceChildren();const query=input.value.trim();if(!query||value.value){close();return;}
@@ -92,8 +92,8 @@ function createStudentPicker({input,results,value,getStudents=()=>read().student
   }
   results.hidden=false;input.setAttribute('aria-expanded','true');
  }
- function select(student){value.value=student.id;input.value=student.name+' • '+(student.matricula||student.id);input.setCustomValidity('');close();input.focus();onSelect(student);input.dispatchEvent(new Event('change',{bubbles:true}));}
- function setStudent(studentId){const student=getStudents().find(s=>s.id===studentId);if(student){value.value=student.id;input.value=student.name+' • '+(student.matricula||student.id);input.setCustomValidity('');close();}else clear();}
+ function select(student){value.value=student.id;input.value=formatSelection(student);input.setCustomValidity('');close();input.focus();onSelect(student);input.dispatchEvent(new Event('change',{bubbles:true}));}
+ function setStudent(studentId){const student=getStudents().find(s=>s.id===studentId);if(student){value.value=student.id;input.value=formatSelection(student);input.setCustomValidity('');close();}else clear();}
  function clear(){value.value='';input.value='';input.setCustomValidity('');close();}
  input.addEventListener('input',async()=>{
   if(value.value){if(!await beforeClear()){setStudent(value.value);return;}value.value='';onClear();}

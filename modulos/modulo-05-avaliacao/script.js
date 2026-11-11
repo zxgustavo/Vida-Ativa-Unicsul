@@ -20,6 +20,7 @@ async function load(){
  }catch(e){D.feedback($('historico-feedback'),e.message,true);}
 }
 const picker=D.createStudentPicker({input:$('alunoBusca'),results:$('alunoResultados'),value:$('aluno'),getStudents:()=>students.filter(D.isActiveStudent),
+ formatSelection:student=>student.name,
  onSelect:student=>{$('matricula').value=student.matricula;$('filtroAluno').value=student.matricula;pagina=1;if(student.birth)$('data').setAttribute('min',student.birth);else $('data').removeAttribute('min');validateRanges();render();},
  onClear:()=>{$('matricula').value='';$('filtroAluno').value='';pagina=1;$('data').removeAttribute('min');validateRanges();render();}
 });

@@ -275,7 +275,7 @@ test('Bordas dos campos, foco e indicadores têm contraste mínimo de 3:1',()=>{
 });
 test('Tema Carbono e Neon usa cores centralizadas em todos os módulos',()=>{
  const{css,block}=theme(),shell=fs.readFileSync(path.join(root,'style.css'),'utf8'),definitions=new Set([...block.matchAll(/(--[\w-]+)\s*:/g)].map(m=>m[1]));
- assert.match(block,/color-scheme:\s*dark/);assert.match(block,/--bg:\s*#151718/i);assert.match(block,/--surface:\s*#1F2226/i);assert.match(block,/--accent:\s*#B8FF29/i);assert.match(block,/--on-accent:\s*#111315/i);assert.match(css,/\.btn-primary\s*\{[^}]*font-weight:\s*600/);assert.match(css,/\.btn-primary:hover:not\(:disabled\)\s*\{[^}]*filter:\s*brightness\(1\.1\)/);assert.doesNotMatch(css.replace(/:root\s*\{[^}]+\}/,''),/#[\da-f]{3,8}\b/gi);assert.doesNotMatch(shell,/#[\da-f]{3,8}\b/gi);
+ assert.match(block,/color-scheme:\s*dark/);assert.match(block,/--bg:\s*#151718/i);assert.match(block,/--surface:\s*#1F2226/i);assert.match(block,/--accent:\s*#A3D700/i);assert.match(block,/--on-accent:\s*#111315/i);assert.match(css,/\.btn-primary\s*\{[^}]*font-weight:\s*600/);assert.match(css,/\.btn-primary:hover:not\(:disabled\)\s*\{[^}]*filter:\s*brightness\(1\.1\)/);assert.doesNotMatch(css.replace(/:root\s*\{[^}]+\}/,''),/#[\da-f]{3,8}\b/gi);assert.doesNotMatch(shell,/#[\da-f]{3,8}\b/gi);
  for(const stylesheet of [css,shell])for(const m of stylesheet.matchAll(/var\((--[\w-]+)\)/g))assert.ok(definitions.has(m[1]),'Variável não declarada: '+m[1]);
  const html=fs.readFileSync(path.join(root,'index.html'),'utf8');assert.match(html,/name="theme-color" content="#151718"/);assert.match(html,/<img[^>]+src="assets\/logo-vida-ativa\.png"/);assert.doesNotMatch(html,/⚡/);
  for(const module of ['modulo-01-cadastros','modulo-02-financeiro','modulo-03-portaria','modulo-04-auditoria','modulo-05-avaliacao','modulo-06-relatorios']){const local=fs.readFileSync(path.join(root,'modulos',module,'style.css'),'utf8');assert.doesNotMatch(local,/color-scheme:\s*(?:dark|light)|#[\da-f]{3,8}\b/gi);}
@@ -530,9 +530,11 @@ test('Avaliação envia os dados à API e apresenta erros sem descartar o formul
 });
 test('Avaliação limpa o estado de validação após salvar e continua validando novas entradas',async()=>{
  const p=page('modulos/modulo-05-avaliacao/index.html');await p.ready;await chooseStudent(p,'alunoBusca','1111');
+ assert.equal(p.nodes.alunoBusca.value,'Lucas Andrade');assert.equal(p.nodes.matricula.value,'1111');assert.equal(p.nodes.aluno.value,'1111');
  p.nodes.peso.value='10';await p.nodes.formAvaliacao.fire('submit');assert.match(p.nodes.feedback.textContent,/peso/);
  p.nodes.peso.value='74.5';p.nodes.altura.value='175';p.nodes.objetivo.value='Outro';p.nodes.formAvaliacao.classList.add('was-validated');
  await p.nodes.formAvaliacao.fire('submit');await p.flush();assert.equal(p.nodes.formAvaliacao.classList.contains('was-validated'),false);assert.equal(p.nodes.peso.validationMessage,'');assert.match(p.nodes.feedback.textContent,/Avaliação salva/);
+ assert.equal(p.nodes.alunoBusca.value,'Lucas Andrade');assert.equal(p.nodes.matricula.value,'1111');assert.equal(p.nodes.aluno.value,'1111');
  p.nodes.peso.value='10';await p.nodes.peso.fire('input');assert.doesNotMatch(p.nodes.feedback.textContent,/peso deve/);await p.nodes.formAvaliacao.fire('submit');assert.match(p.nodes.feedback.textContent,/peso deve/);
 });
 test('Avaliação comunica falha de conexão sem exibir histórico de demonstração',async()=>{

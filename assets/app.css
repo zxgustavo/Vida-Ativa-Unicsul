@@ -6,7 +6,7 @@
   --surface-soft: #24282D;
   --border: #2C3035;
   --control-border: #89949E;
-  --accent: #B8FF29;
+  --accent: #A3D700;
   --accent-soft: #263116;
   --on-accent: #111315;
   --text: #FFFFFF;
@@ -77,7 +77,7 @@ body.embedded .back-link { display: none; }
 .student-search-summary, .student-search-empty { margin: 0; padding: 8px 12px; }
 label, .field-label { font-size: 14px; font-weight: 600; }
 input, select, textarea { display: block; width: 100%; min-width: 0; background: color-mix(in srgb, var(--bg), var(--surface) 42%); border: 1px solid var(--control-border); color: var(--text); border-radius: var(--radius-control); padding: 10px 12px; min-height: 46px; transition: border-color var(--motion-fast), background-color var(--motion-fast), box-shadow var(--motion-fast); }
-select { appearance: none; padding-right: 40px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='m3 6 5 5 5-5' stroke='%23B8FF29' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px; }
+select { appearance: none; padding-right: 40px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='m3 6 5 5 5-5' stroke='%23A3D700' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px; }
 select option, select optgroup { background-color: var(--surface); color: var(--text); }
 @media (forced-colors: active) { select { appearance: auto; background-image: none; } }
 textarea { resize: vertical; min-height: 96px; }

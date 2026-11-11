@@ -218,7 +218,7 @@ function render(){
    more.setAttribute('aria-label',more.textContent+' — '+s.name);
   });
   more.setAttribute('aria-expanded',String(!detail.hidden));more.setAttribute('aria-controls',detail.id);actions.append(more);
-  rowCell(row,'Ações',actions);body.append(row,detail);
+  rowCell(row,'Ações',actions).classList.add('finance-actions-cell');body.append(row,detail);
  }
 }
 function validate(){
