@@ -1,15 +1,29 @@
 (function(){
 'use strict';
+const hoje=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
 const D=Demo,$=id=>document.getElementById(id),form=$('formRelatorio'),feedback=$('feedback');
 const API='http://localhost:3333/api/relatorios/dashboard';
-const indicadores=['total-alunos','alunos-ativos','receita-prevista','avaliacoes-mes','alunos-vencidos','alunos-a-iniciar','avaliacoes-periodo'];
-let version=0,timer,pagina=1,reportData=null,aplicados=null;
+const indicadores=['total-alunos','alunos-ativos','receita-prevista','avaliacoes-mes','alunos-vencidos','alunos-a-iniciar','avaliacoes-periodo','recebido-periodo','pagamentos-total'];
+let version=0,timer,pagina=1,paginaPagamentos=1,reportData=null,aplicados=null;
 const POR_PAGINA=10;
 D.initPage({bootstrap:false});
-function padrao(){$('dataInicio').value=D.today().slice(0,7)+'-01';$('dataFim').value=D.today();$('status').value='todos';$('buscarAluno').value='';}
-function clearResults(message){reportData=null;pagina=1;for(const id of indicadores)$(id).textContent='—';D.empty($('tabelaCorpo'),8,message);$('mensagemInfo').textContent='';$('report-caption').textContent='Contratos por aluno';$('relatorios-pagina').textContent='Página 1 de 1';$('relatorios-anterior').disabled=true;$('relatorios-proxima').disabled=true;}
+function padrao(){$('dataInicio').value=hoje().slice(0,7)+'-01';$('dataFim').value=hoje();$('status').value='todos';$('buscarAluno').value='';}
+function clearResults(message){reportData=null;pagina=1;paginaPagamentos=1;for(const id of indicadores)$(id).textContent='—';D.empty($('tabelaCorpo'),8,message);D.empty($('pagamentosCorpo'),8,message);$('pagamentos-info').textContent='';$('pagamentos-caption').textContent='Recebimentos confirmados';$('pagamentos-pagina').textContent='Página 1 de 1';$('pagamentos-anterior').disabled=true;$('pagamentos-proxima').disabled=true;$('mensagemInfo').textContent='';$('report-caption').textContent='Contratos por aluno';$('relatorios-pagina').textContent='Página 1 de 1';$('relatorios-anterior').disabled=true;$('relatorios-proxima').disabled=true;}
+function renderPagamentos(data){
+ const pagamentos=data.pagamentos,body=$('pagamentosCorpo'),total=D.money(data.totais.recebidoCentavos);
+ $('recebido-periodo').textContent=total;$('pagamentos-total').textContent=total;body.replaceChildren();
+ $('pagamentos-info').textContent=pagamentos.length+' recebimento(s)';
+ $('pagamentos-caption').textContent='Pagamentos de '+D.formatDate(data.periodo.dataInicio)+' a '+D.formatDate(data.periodo.dataFim);
+ const paginas=Math.max(1,Math.ceil(pagamentos.length/POR_PAGINA));paginaPagamentos=Math.min(paginaPagamentos,paginas);
+ $('pagamentos-pagina').textContent='Página '+paginaPagamentos+' de '+paginas;$('pagamentos-anterior').disabled=paginaPagamentos===1;$('pagamentos-proxima').disabled=paginaPagamentos===paginas;
+ if(!pagamentos.length){D.empty(body,8,'Nenhum pagamento recebido para os filtros selecionados.');return;}
+ for(const p of pagamentos.slice((paginaPagamentos-1)*POR_PAGINA,paginaPagamentos*POR_PAGINA)){
+  const row=document.createElement('tr');D.cell(row,D.formatDate(p.dataPagamento));D.cell(row,p.aluno.matricula);D.cell(row,p.aluno.nome);D.cell(row,D.cpfText(p.aluno.cpf));D.cell(row,p.plano+(p.origem==='Legado'?' · Legado':''));D.cell(row,p.formaPagamento);D.cell(row,p.situacaoAtual);D.cell(row,D.money(p.valorCentavos));body.append(row);
+ }
+}
 function render(data){
  reportData=data;
+ renderPagamentos(data);
  const t=data.totais;
  $('total-alunos').textContent=t.alunos;$('alunos-ativos').textContent=t.alunosAtivos;$('receita-prevista').textContent=D.money(Math.round(t.receitaPrevista*100));
  $('avaliacoes-mes').textContent=t.avaliacoesMes;$('alunos-vencidos').textContent=t.alunosVencidos;$('alunos-a-iniciar').textContent=t.alunosAIniciar;$('avaliacoes-periodo').textContent=t.avaliacoesPeriodo;
@@ -33,11 +47,12 @@ async function atualizar(aplicar=false){
  if(aplicar)aplicados=filtros;
  const query=[['dataInicio',from],['dataFim',to],['situacao',status],['busca',$('buscarAluno').value.trim()]].map(([key,value])=>encodeURIComponent(key)+'='+encodeURIComponent(value)).join('&');
  D.feedback(feedback,'Atualizando relatório…');
+ clearResults('Atualizando relatório…');
  try{
   let response;try{response=await fetch(API+'?'+query);}catch{throw new Error('Não foi possível conectar à API. Verifique se o servidor está em execução.');}
   let data;try{data=await response.json();}catch{data=null;}
   if(!response.ok)throw new Error(typeof data?.erro==='string'?data.erro:'Não foi possível gerar o relatório (HTTP '+response.status+').');
-  if(!data?.totais||!data?.periodo||!Array.isArray(data.alunos))throw new Error('A API retornou um relatório inválido.');
+  if(!data?.totais||!data?.periodo||!Array.isArray(data.alunos)||!Array.isArray(data.pagamentos)||!Number.isSafeInteger(data.totais.recebidoCentavos))throw new Error('A API retornou um relatório inválido.');
   if(id!==version)return;render(data);D.feedback(feedback,'');
  }catch(e){if(id!==version)return;clearResults('Não foi possível carregar o relatório.');D.feedback(feedback,e.message,true);}
 }
@@ -46,5 +61,7 @@ $('limparFiltros').addEventListener('click',()=>{clearTimeout(timer);padrao();pa
 $('buscarAluno').addEventListener('input',()=>{clearTimeout(timer);version++;pagina=1;timer=setTimeout(()=>atualizar(),250);});
 $('relatorios-anterior').addEventListener('click',()=>{if(reportData&&pagina>1){pagina--;render(reportData);}});
 $('relatorios-proxima').addEventListener('click',()=>{if(reportData&&!$('relatorios-proxima').disabled){pagina++;render(reportData);}});
+$('pagamentos-anterior').addEventListener('click',()=>{if(reportData&&paginaPagamentos>1){paginaPagamentos--;renderPagamentos(reportData);}});
+$('pagamentos-proxima').addEventListener('click',()=>{if(reportData&&!$('pagamentos-proxima').disabled){paginaPagamentos++;renderPagamentos(reportData);}});
 padrao();clearResults('Carregando relatório…');atualizar(true);
 })();

@@ -1,9 +1,10 @@
 (function(){
 'use strict';
+const hoje=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
 const D=Demo,$=id=>document.getElementById(id),form=$('formFinanceiro'),feedback=$('feedback');
 const fieldIds=['aluno','dataInicio','dataVencimento','tolerancia','statusContrato','pagamento','status','dataPagamento'];
 const expanded=new Set(),actionTargets=new Map(),planInputs=new Map();
-let selectedStudent='',selectedContract='',selectedPlan='mensal',mode='new',baseline=null,returnAction='new',saving=false,managing=false,refreshVersion=0;
+let selectedStudent='',selectedContract='',selectedPlan='mensal',mode='new',baseline=null,returnAction='new',saving=false,managing=false,refreshVersion=0,operacaoPagamento='';
 let state={students:[],contracts:[],payments:[]};
 let pagina=1;const POR_PAGINA=10;
 const api='http://localhost:3333/api';
@@ -33,10 +34,10 @@ function el(tag,text,className){const n=document.createElement(tag);if(text!==un
 function contractLabel(c){
  if(!c)return 'Sem contrato';
  if(c.state!=='Ativo')return c.state;
- if(c.start>D.today())return 'A iniciar';
- return c.due<D.today()?'Vencido':'Vigente';
+ if(c.start>hoje())return 'A iniciar';
+ return c.due<hoje()?'Vencido':'Vigente';
 }
-function paymentLabel(c,p){return !p?'Sem cobrança':p.status==='Pago'?'Pago':c.due<D.today()?'Atrasado':'Pendente';}
+function paymentLabel(c,p){return !p?'Sem cobrança':p.status==='Pago'?'Pago':c.due<hoje()?'Atrasado':'Pendente';}
 function badge(label){return D.badge(label,['Vigente','Pago'].includes(label)?'ok':['Pendente','Vencido','Suspenso','A iniciar'].includes(label)?'warn':['Sem contrato','Sem cobrança'].includes(label)?'neutral':'danger');}
 function summaryItem(list,label,value,before){
  const item=el('div'),term=el('dt',label),desc=el('dd',value);
@@ -74,12 +75,12 @@ async function closeOperation(){
 }
 function effectiveDue(){
  const c=baseline?.contract;
- return c?.state==='Suspenso'&&$('statusContrato').value==='Ativo'?D.addDays(D.today(),c.suspendedDays||0):$('dataVencimento').value;
+ return c?.state==='Suspenso'&&$('statusContrato').value==='Ativo'?D.addDays(hoje(),c.suspendedDays||0):$('dataVencimento').value;
 }
 function values(){
  const due=mode==='payment'?baseline.contract.due:effectiveDue();
  return {studentId:selectedStudent,planId:selectedPlan,start:$('dataInicio').value,due,tolerance:Number($('tolerancia').value),state:$('statusContrato').value,
- method:$('pagamento').value,status:$('status').value==='Pago'?'Pago':due<D.today()?'Atrasado':'Pendente',paidDate:$('dataPagamento').value};
+ method:$('pagamento').value,status:$('status').value==='Pago'?'Pago':due<hoje()?'Atrasado':'Pendente',paidDate:$('dataPagamento').value};
 }
 function review(){
  const student=state.students.find(s=>s.id===selectedStudent),list=$('resumo-operacao');
@@ -92,7 +93,7 @@ function review(){
  summaryItem(list,'Plano',c&&selectedPlan===c.planId?c.planName:D.plan(selectedPlan).name,c?.planName);
  summaryItem(list,'Valor',D.money(c&&selectedPlan===c.planId?c.amount:D.plan(selectedPlan).price),p?D.money(p.amount):undefined);
  summaryItem(list,'Início',D.formatDate(v.start),c?D.formatDate(c.start):undefined);
- summaryItem(list,'Vencimento',D.formatDate(planoRenovacao?D.addMonths(D.today(),planoRenovacao.months):v.due),c?D.formatDate(c.due):undefined);
+ summaryItem(list,'Vencimento',D.formatDate(planoRenovacao?D.addMonths(hoje(),planoRenovacao.months):v.due),c?D.formatDate(c.due):undefined);
  summaryItem(list,'Situação administrativa',planoRenovacao?'Vigente':v.state,c?.state);
  summaryItem(list,'Forma de pagamento',v.method,p?.method);
  summaryItem(list,'Pagamento',v.status,p?paymentLabel(c,p):undefined);
@@ -101,7 +102,7 @@ function review(){
 }
 function paymentField(){
  const paid=$('status').value==='Pago';$('paid-field').hidden=!paid;$('dataPagamento').disabled=!paid;$('dataPagamento').required=paid;
- if(paid&&!$('dataPagamento').value)$('dataPagamento').value=D.today();
+ if(paid&&!$('dataPagamento').value)$('dataPagamento').value=hoje();
  review();
 }
 function updatePlanDate(){
@@ -112,6 +113,7 @@ function updatePlanDate(){
  review();
 }
 function loadStudent(preserveSearch=false){
+ operacaoPagamento='pagamento-'+(window.crypto?.randomUUID?.()||Date.now().toString(36)+'-'+Math.random().toString(36).slice(2));
  const student=state.students.find(s=>s.id===selectedStudent),c=mode==='new'?null:currentContract(),p=c&&D.payment(state,c.id);
  baseline={contract:c||null,payment:p||null};
  const students=mode==='new'?state.students.filter(s=>D.isActiveStudent(s)):state.students.filter(s=>s.id===selectedStudent);
@@ -124,15 +126,15 @@ function loadStudent(preserveSearch=false){
  $('operation-kicker').textContent=mode==='new'?'Novo contrato':mode==='payment'?'Atualizar cobrança':'Editar registro';
  $('operation-title').textContent=mode==='new'?'Cadastrar contrato e pagamento':mode==='payment'?'Registrar pagamento':'Editar contrato e pagamento';
  $('payment-legend').textContent='Pagamento';
- $('contract-hint').textContent=mode==='payment'?'Ao marcar como Pago, contratos vencidos são renovados por um período do plano a partir de hoje. Contratos vigentes mantêm suas datas.':
+ $('contract-hint').textContent=mode==='payment'?'Um novo recebimento em contrato vencido renova o plano a partir de hoje. Repetir o pagamento não soma receita novamente. Recebimentos registrados são preservados no histórico.':
  c?'Alterações no contrato e pagamento serão aplicadas ao salvar.':
  student?'Este aluno ainda não possui contrato. Preencha os dados e salve para contratar um plano.':
  students.length?'Selecione um aluno já cadastrado para contratar um plano.':'Cadastre um aluno ativo em Gestão de Cadastros antes de criar um contrato.';
  selectedPlan=c?.planId||'mensal';for(const[id,input]of planInputs)input.checked=id===selectedPlan;
- $('dataInicio').value=c?.start||D.today();$('dataVencimento').value=c?.due||D.addMonths(D.today(),1);
+ $('dataInicio').value=c?.start||hoje();$('dataVencimento').value=c?.due||D.addMonths(hoje(),1);
  $('dataVencimento').min=$('dataInicio').value;$('tolerancia').value=String(c?.tolerance??5);
  $('statusContrato').value=c?.state||'Ativo';$('pagamento').value=p?.method||'PIX';$('status').value=p?.status==='Pago'?'Pago':'Pendente';
- $('dataPagamento').value=p?.paidDate||D.today();$('dataPagamento').max=D.today();
+ $('dataPagamento').value=p?.paidDate||hoje();$('dataPagamento').max=hoje();
  $('valor').textContent=D.money(c?c.amount:D.plan(selectedPlan).price);
  $('date-hint').textContent='Calculado pelo plano e início. Você pode ajustar o vencimento.';
  $('gestao-contrato').hidden=!c||c.state==='Cancelado';
@@ -146,13 +148,13 @@ async function manageContract(id){
  if(!await mayDiscard())return;
  const c=state.contracts.find(item=>item.id===id),student=state.students.find(s=>s.id===c?.studentId);
  if(!c||c.state==='Cancelado')return;
- const reactivate=c.state==='Suspenso',days=reactivate?c.suspendedDays||0:Math.max(0,D.daysBetween(D.today(),c.due));
- const message=reactivate?'Reativar o contrato de '+student.name+' agora? Novo vencimento: '+D.formatDate(D.addDays(D.today(),days))+'. O pagamento será preservado.':
+ const reactivate=c.state==='Suspenso',days=reactivate?c.suspendedDays||0:Math.max(0,D.daysBetween(hoje(),c.due));
+ const message=reactivate?'Reativar o contrato de '+student.name+' agora? Novo vencimento: '+D.formatDate(D.addDays(hoje(),days))+'. O pagamento será preservado.':
  'Suspender o contrato de '+student.name+' agora? Serão preservados '+days+' dia(s) e o pagamento atual.';
  if(!await D.confirm(message,{title:reactivate?'Reativar contrato':'Suspender contrato',confirmLabel:reactivate?'Reativar':'Suspender',danger:!reactivate}))return;
  managing=true;
  try{
-  await send('PUT',api+'/financeiro/'+encodeURIComponent(id),{situacao:reactivate?'Ativo':'Suspenso',dataFim:reactivate?D.addDays(D.today(),days):c.due,diasSuspensos:reactivate?0:days});
+  await send('PUT',api+'/financeiro/'+encodeURIComponent(id),{situacao:reactivate?'Ativo':'Suspenso',dataFim:reactivate?D.addDays(hoje(),days):c.due,diasSuspensos:reactivate?0:days});
   try{await refresh();}catch(e){D.feedback($('page-feedback'),'Alteração salva, mas não foi possível atualizar a lista. '+e.message,true);return;}
   if(!$('painel-operacao').hidden)loadStudent();else window.demoDirty=false;
   D.feedback($('page-feedback'),(reactivate?'Contrato reativado':'Contrato suspenso')+' — '+student.name+'. Pagamento preservado.');
@@ -235,7 +237,7 @@ function validate(){
  }
  if(!['PIX','Cartão','Dinheiro','Boleto'].includes($('pagamento').value))fail('pagamento','Selecione a forma de pagamento.');
  if(!['Pago','Pendente'].includes($('status').value))fail('status','Informe se o pagamento foi recebido.');
- if($('status').value==='Pago'&&(!D.date($('dataPagamento').value)||$('dataPagamento').value>D.today()))fail('dataPagamento','Informe uma data de recebimento válida, até hoje.');
+ if($('status').value==='Pago'&&(!D.date($('dataPagamento').value)||$('dataPagamento').value>hoje()))fail('dataPagamento','Informe uma data de recebimento válida, até hoje.');
  if(failures.length){
   if(failures.some(id=>['tolerancia','statusContrato'].includes(id)))$('ajustes-contrato').open=true;
   D.feedback(feedback,'Confira os campos indicados antes de salvar.',true);$(failures[0]==='aluno'?'alunoBusca':failures[0]).focus();return false;
@@ -270,7 +272,8 @@ form.addEventListener('submit',async event=>{
  try{
   const v=values(),name=state.students.find(s=>s.id===selectedStudent).name,wasNew=mode==='new';
   const body=mode==='payment'?{formaPagamento:v.method,statusPagamento:v.status,dataPagamento:v.status==='Pago'?v.paidDate:null}:payload(v);
-  if(mode!=='payment'&&baseline?.contract?.state!=='Suspenso'&&v.state==='Suspenso')body.diasSuspensos=Math.max(0,D.daysBetween(D.today(),v.due));
+  if(v.status==='Pago')body.operacaoPagamento=operacaoPagamento;
+  if(mode!=='payment'&&baseline?.contract?.state!=='Suspenso'&&v.state==='Suspenso')body.diasSuspensos=Math.max(0,D.daysBetween(hoje(),v.due));
   if(mode!=='payment'&&baseline?.contract?.state==='Suspenso'&&v.state==='Ativo')body.diasSuspensos=0;
   const saved=await send(wasNew?'POST':'PUT',api+'/financeiro'+(wasNew?'':'/'+encodeURIComponent(selectedContract)),body);
   selectedContract=saved.id;if(wasNew)mode='edit';window.demoDirty=false;

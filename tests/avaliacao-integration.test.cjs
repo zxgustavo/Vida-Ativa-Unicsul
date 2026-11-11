@@ -3,8 +3,8 @@
 const assert=require('node:assert/strict');
 const Database=require('../backend/node_modules/better-sqlite3');
 const {page}=require('./front-end.test.cjs');
-const db=new Database(require('node:path').join(__dirname,'../backend/dev.db'));
-const api='http://localhost:3333/api';
+const db=new Database(process.env.TEST_DATABASE_PATH || require('node:path').join(__dirname,'../backend/dev.db'));
+const api=(process.env.TEST_API_URL || 'http://localhost:3333')+'/api';
 async function request(path,method='GET',data){const response=await fetch(api+path,{method,headers:{'Content-Type':'application/json'},body:data===undefined?undefined:JSON.stringify(data)});return {status:response.status,body:await response.json()};}
 async function waitFor(test){for(let i=0;i<100;i++){if(test())return;await new Promise(resolve=>setTimeout(resolve,30));}throw new Error('A página não concluiu a consulta à API.');}
 async function main(){

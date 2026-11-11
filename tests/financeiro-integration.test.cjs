@@ -3,8 +3,8 @@
 const assert=require('node:assert/strict');
 const Database=require('../backend/node_modules/better-sqlite3');
 const {page,answerDialog,descendants}=require('./front-end.test.cjs');
-const api='http://localhost:3333/api';
-const db=new Database(require('node:path').join(__dirname,'../backend/dev.db'));
+const api=(process.env.TEST_API_URL || 'http://localhost:3333')+'/api';
+const db=new Database(process.env.TEST_DATABASE_PATH || require('node:path').join(__dirname,'../backend/dev.db'));
 async function request(route,method='GET',data){const response=await fetch(api+route,{method,headers:{'Content-Type':'application/json'},body:data?JSON.stringify(data):undefined});return {status:response.status,body:await response.json()};}
 async function waitFor(predicate){for(let i=0;i<100;i++){if(predicate())return;await new Promise(resolve=>setTimeout(resolve,30));}throw new Error('A página não concluiu a consulta da API.');}
 async function main(){
@@ -38,6 +38,6 @@ async function main(){
   p3.nodes['status-aluno'].value='ativos';await p3.nodes['status-aluno'].fire('change');assert.equal(p3.nodes.tabelaDados.children.some(n=>n.getAttribute('data-student-id')===alunoId),false);
   p3.nodes['status-aluno'].value='todos';await p3.nodes['status-aluno'].fire('change');assert.match(p3.nodes.tabelaDados.textContent,/Cadastro inativo/);assert.equal(filteredCalls.length,callsAfterLoad);
   console.log('Integração Financeiro: criação, pagamento, suspensão, reativação, múltiplos contratos e cancelamento confirmados no SQLite.');
- }finally{if(alunoId){db.prepare('DELETE FROM Contrato WHERE alunoId = ?').run(alunoId);db.prepare('DELETE FROM Aluno WHERE id = ?').run(alunoId);}db.close();}
+ }finally{if(alunoId){db.prepare('DELETE FROM Pagamento WHERE contratoId IN (SELECT id FROM Contrato WHERE alunoId=?)').run(alunoId);db.prepare('DELETE FROM Contrato WHERE alunoId = ?').run(alunoId);db.prepare('DELETE FROM Aluno WHERE id = ?').run(alunoId);}db.close();}
 }
 main().catch(e=>{console.error(e);process.exitCode=1;});

@@ -65,7 +65,7 @@ async function main() {
       const fim = situacao === "Vigente" ? 20 : situacao === "Vencido" ? -5 : 40;
       const plano = planos[indice];
       const pago = situacao === "Vigente" && indice % 2 === 0;
-      await tx.contrato.upsert({
+      const contrato = await tx.contrato.upsert({
         where: { id: id("c", numero) }, update: { plano: plano.nome, valor: plano.valor },
         create: {
           id: id("c", numero), alunoId, plano: plano.nome, valor: plano.valor,
@@ -74,6 +74,9 @@ async function main() {
           statusPagamento: pago ? "Pago" : "Pendente", dataPagamento: pago ? deslocarDias(hoje, -2) : null,
         },
       });
+      if (contrato.statusPagamento === "Pago" && contrato.dataPagamento && !(await tx.pagamento.count({ where: { contratoId: contrato.id } }))) {
+        await tx.pagamento.create({ data: { contratoId: contrato.id, chave: `seed:${contrato.id}`, valorCentavos: Math.round(contrato.valor * 100), plano: contrato.plano, formaPagamento: contrato.formaPagamento, dataPagamento: contrato.dataPagamento.toISOString().slice(0,10) } });
+      }
       if (indice < 8) {
         // Todas as avaliações ficam no mês atual, inclusive quando o seed roda no dia 1.
         const dataAvaliacao = deslocarDias(hoje, -Math.min(indice, hoje.getUTCDate() - 1));

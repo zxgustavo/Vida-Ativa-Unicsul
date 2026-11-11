@@ -1,5 +1,6 @@
 import { prisma } from "../database/prisma";
 import { ErroAplicacao } from "./alunoService";
+import { diaPagamento } from "./dataPagamento";
 
 const situacoes = ["todos", "Vigente", "Vencido", "A iniciar", "Suspenso", "Cancelado", "Sem contrato"] as const;
 type Situacao = typeof situacoes[number];
@@ -31,11 +32,12 @@ export const relatorioService = {
     const busca = normalizar((filtros.busca as string | undefined) ?? "");
     const digitos = /^[\d.\- /]+$/.test(busca) ? busca.replace(/\D/g, "") : "";
     const limiteFim = new Date(`${fim}T00:00:00.000Z`);limiteFim.setUTCDate(limiteFim.getUTCDate() + 1);
-    const [alunos, contratos, avaliacoesMes, avaliacoesPeriodo] = await prisma.$transaction([
+    const [alunos, contratos, avaliacoesMes, avaliacoesPeriodo, pagamentos] = await prisma.$transaction([
       prisma.aluno.findMany({ select: { id: true, nome: true, matricula: true, cpf: true, ativo: true, criadoEm: true }, orderBy: { nome: "asc" } }),
       prisma.contrato.findMany({ select: { id: true, alunoId: true, plano: true, valor: true, dataInicio: true, dataFim: true, situacao: true }, orderBy: { dataInicio: "desc" } }),
       prisma.avaliacaoFisica.count({ where: { dataAvaliacao: { gte: new Date(`${inicioMes}T00:00:00.000Z`), lt: proximoMes } } }),
       prisma.avaliacaoFisica.count({ where: { dataAvaliacao: { gte: new Date(`${inicio}T00:00:00.000Z`), lt: limiteFim } } }),
+      prisma.pagamento.findMany(),
     ]);
     const classificados = contratos.map(c => {
       const estado = c.situacao === "Suspenso" || c.situacao === "Cancelado" ? c.situacao :
@@ -51,9 +53,19 @@ export const relatorioService = {
       lista.push(contrato);porAluno.set(contrato.alunoId, lista);
     }
     const dataLocal = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit" });
+    const corresponde = (a: typeof alunos[number]) => !busca || normalizar(a.nome).includes(busca) || normalizar(a.matricula).includes(busca) || Boolean(digitos && a.cpf.replace(/\D/g, "").includes(digitos));
+    const alunosPorId = new Map(alunos.map(a => [a.id, a]));
+    const contratosPorId = new Map(classificados.map(c => [c.id, c]));
+    const recebimentos = pagamentos.flatMap(p => {
+      const contrato = contratosPorId.get(p.contratoId), aluno = contrato && alunosPorId.get(contrato.alunoId);
+      const dia = diaPagamento(p.dataPagamento, p.origem === "Legado");
+      if (!contrato || !aluno || dia < inicio || dia > fim || !corresponde(aluno) || (situacao !== "todos" && contrato.situacaoAtual !== situacao)) return [];
+      return [{ id: p.id, contratoId: p.contratoId, aluno: { id: aluno.id, nome: aluno.nome, cpf: aluno.cpf, matricula: aluno.matricula }, plano: p.plano, valorCentavos: p.valorCentavos, formaPagamento: p.formaPagamento, dataPagamento: dia, situacaoAtual: contrato.situacaoAtual, origem: p.origem }];
+    }).sort((a,b) => b.dataPagamento.localeCompare(a.dataPagamento) || a.aluno.nome.localeCompare(b.aluno.nome) || a.id.localeCompare(b.id));
+    const recebidoCentavos = recebimentos.reduce((soma, p) => soma + p.valorCentavos, 0);
     const resultados = alunos.filter(a => {
       const cadastro = dataLocal.format(a.criadoEm);
-      return cadastro >= inicio && cadastro <= fim && (!busca || normalizar(a.nome).includes(busca) || normalizar(a.matricula).includes(busca) || (digitos && a.cpf.replace(/\D/g, "").includes(digitos)));
+      return cadastro >= inicio && cadastro <= fim && corresponde(a);
     }).flatMap(a => {
       const todos = porAluno.get(a.id) ?? [];
       const filtrados = situacao === "todos" ? todos : todos.filter(c => c.situacaoAtual === situacao);
@@ -61,6 +73,6 @@ export const relatorioService = {
       if (situacao === "Sem contrato" && todos.length) return [];
       return [{ id: a.id, nome: a.nome, matricula: a.matricula, cpf: a.cpf, ativo: a.ativo, dataCadastro: dataLocal.format(a.criadoEm), contratos: filtrados }];
     });
-    return { periodo: { dataInicio: inicio, dataFim: fim }, totais: { alunos: alunos.length, alunosAtivos: alunos.filter(a => a.ativo).length, receitaPrevista, avaliacoesMes, avaliacoesPeriodo, alunosVencidos: vencidos.size, alunosAIniciar: aIniciar.size }, alunos: resultados };
+    return { periodo: { dataInicio: inicio, dataFim: fim }, totais: { recebidoCentavos, recebidoPeriodo: recebidoCentavos / 100, alunos: alunos.length, alunosAtivos: alunos.filter(a => a.ativo).length, receitaPrevista, avaliacoesMes, avaliacoesPeriodo, alunosVencidos: vencidos.size, alunosAIniciar: aIniciar.size }, pagamentos: recebimentos, alunos: resultados };
   },
 };

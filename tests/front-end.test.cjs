@@ -103,7 +103,7 @@ function page(file,storage=new Map(),fetchOverride,sessionProfile='admin',sessio
   apiCalls.push({url,method:options.method||'GET'});const params=new URL(String(url)).searchParams;
   const alunos=[{id:'1111',nome:'Lucas Andrade',matricula:'1111',cpf:'52998224725',dataCadastro:'2026-10-05',ativo:true,contratos:[{id:'c-1111',plano:'Mensal',valor:120,situacaoAtual:'Vigente'}]}];
   const matches=alunos.filter(a=>a.dataCadastro>=params.get('dataInicio')&&a.dataCadastro<=params.get('dataFim')&&(!params.get('busca')||a.nome.toLowerCase().includes(params.get('busca').toLowerCase())||a.matricula.includes(params.get('busca')))&&(params.get('situacao')==='todos'||a.contratos.some(c=>c.situacaoAtual===params.get('situacao'))));
-  return {ok:true,status:200,json:async()=>({periodo:{dataInicio:params.get('dataInicio'),dataFim:params.get('dataFim')},totais:{alunos:3,alunosAtivos:2,receitaPrevista:120,avaliacoesMes:1,avaliacoesPeriodo:params.get('dataInicio').startsWith('2099')?0:1,alunosVencidos:1,alunosAIniciar:0},alunos:matches})};
+  return {ok:true,status:200,json:async()=>({periodo:{dataInicio:params.get('dataInicio'),dataFim:params.get('dataFim')},pagamentos:[],totais:{recebidoCentavos:0,alunos:3,alunosAtivos:2,receitaPrevista:120,avaliacoesMes:1,avaliacoesPeriodo:params.get('dataInicio').startsWith('2099')?0:1,alunosVencidos:1,alunosAIniciar:0},alunos:matches})};
  };
  if(file==='modulos/modulo-03-portaria/index.html')sandbox.fetch=async(url)=>{
   if(String(url).endsWith('/logs')){apiCalls.push({url,method:'GET'});return {ok:true,status:200,json:async()=>([])};}
@@ -376,7 +376,7 @@ test('Histórico de liberações filtra datas e situação e usa etiquetas semâ
  p.nodes.filtroAluno.value='';p.nodes.filtroInicio.value='2026-10-08';await p.nodes.filtroInicio.fire('change');assert.match(p.nodes['filtro-periodo-feedback'].textContent,/período válido/);p.nodes.filtroInicio.value='';p.nodes.filtroFim.value='';p.nodes.filtroSituacao.value='utilizada';await p.nodes.filtroSituacao.fire('change');assert.equal(body.children.length,1);assert.match(body.textContent,/Utilizada/);assert.equal(p.nodes['filtro-periodo-feedback'].textContent,'');
 });
 test('Relatórios paginam contratos por linha sem repetir chamadas e reiniciam ao filtrar',async()=>{
- let calls=0;const fetchReport=async(url)=>{calls++;const params=new URL(String(url)).searchParams;const aluno={id:'1',nome:'Aluno Um',matricula:'1111',ativo:true,contratos:Array.from({length:23},(_,i)=>({id:String(i),plano:'Plano '+i,valor:100,situacaoAtual:'Vigente'}))};const alunos=params.get('busca')?[]:[aluno,{id:'2',nome:'Aluno Sem Contrato',matricula:'2222',ativo:true,contratos:[]}];return {ok:true,status:200,json:async()=>({periodo:{dataInicio:params.get('dataInicio'),dataFim:params.get('dataFim')},totais:{alunos:2,alunosAtivos:2,receitaPrevista:2300,avaliacoesMes:0,avaliacoesPeriodo:0,alunosVencidos:0,alunosAIniciar:0},alunos})};};
+ let calls=0;const fetchReport=async(url)=>{calls++;const params=new URL(String(url)).searchParams;const aluno={id:'1',nome:'Aluno Um',matricula:'1111',ativo:true,contratos:Array.from({length:23},(_,i)=>({id:String(i),plano:'Plano '+i,valor:100,situacaoAtual:'Vigente'}))};const alunos=params.get('busca')?[]:[aluno,{id:'2',nome:'Aluno Sem Contrato',matricula:'2222',ativo:true,contratos:[]}];return {ok:true,status:200,json:async()=>({periodo:{dataInicio:params.get('dataInicio'),dataFim:params.get('dataFim')},pagamentos:[],totais:{recebidoCentavos:0,alunos:2,alunosAtivos:2,receitaPrevista:2300,avaliacoesMes:0,avaliacoesPeriodo:0,alunosVencidos:0,alunosAIniciar:0},alunos})};};
  const p=page('modulos/modulo-06-relatorios/index.html',new Map(),fetchReport);await p.ready;assert.equal(p.nodes.tabelaCorpo.children.length,10);assert.equal(p.nodes['relatorios-pagina'].textContent,'Página 1 de 3');const initial=calls;
  await p.nodes['relatorios-proxima'].fire('click');assert.equal(p.nodes.tabelaCorpo.children.length,10);await p.nodes['relatorios-proxima'].fire('click');assert.equal(p.nodes.tabelaCorpo.children.length,4);assert.match(p.nodes.tabelaCorpo.textContent,/Aluno Sem Contrato/);assert.equal(calls,initial);
  p.nodes.buscarAluno.value='inexistente';await p.nodes.buscarAluno.fire('input');await p.flush();assert.equal(p.nodes['relatorios-pagina'].textContent,'Página 1 de 1');assert.equal(p.nodes['relatorios-proxima'].disabled,true);assert.match(p.nodes.tabelaCorpo.textContent,/Nenhum aluno/);
@@ -459,7 +459,7 @@ test('Tela de pagamento envia os campos da cobrança e classifica atraso automat
  assert.equal(p.D.payment(p.D.getState(),'c-3333').status,'Atrasado');
  p.nodes.status.value='Pago';await p.nodes.status.fire('change');p.nodes.dataPagamento.value='2026-10-08';await p.nodes.formFinanceiro.fire('submit');
  assert.equal(p.D.payment(p.D.getState(),'c-3333').status,'Pago');assert.deepEqual(p.D.getState().contracts,before.contracts);
- assert.deepEqual(Object.keys(p.apiCalls.filter(call=>call.method==='PUT').at(-1).data).sort(),['dataPagamento','formaPagamento','statusPagamento']);
+ assert.deepEqual(Object.keys(p.apiCalls.filter(call=>call.method==='PUT').at(-1).data).sort(),['dataPagamento','formaPagamento','operacaoPagamento','statusPagamento']);
  assert.match(p.nodes.feedback.textContent,/Pagamento salvo/);
 });
 test('Edição destaca mudanças no resumo e abre ajustes que contêm erros',async()=>{
@@ -516,6 +516,10 @@ test('Busca do relatório usa apenas período e situação já aplicados',async(
  p.nodes.status.value='Vencido';p.nodes.dataInicio.value='2099-01-01';p.nodes.dataFim.value='2099-01-02';p.nodes.buscarAluno.value='Lucas';await p.nodes.buscarAluno.fire('input');await p.flush();
  let params=new URL(p.apiCalls.at(-1).url).searchParams;assert.equal(params.get('situacao'),'todos');assert.equal(params.get('dataInicio'),'2026-10-01');assert.match(p.nodes.tabelaCorpo.textContent,/Lucas/);
  await p.nodes.formRelatorio.fire('submit');params=new URL(p.apiCalls.at(-1).url).searchParams;assert.equal(params.get('situacao'),'Vencido');assert.equal(params.get('dataInicio'),'2099-01-01');assert.match(p.nodes.tabelaCorpo.textContent,/Nenhum aluno/);assert.equal(p.nodes['avaliacoes-periodo'].textContent,'0');
+});
+test('Relatório e prévia financeira usam o dia de São Paulo perto da meia-noite UTC',async()=>{
+ const r=page('modulos/modulo-06-relatorios/index.html');await r.ready;r.sandbox.Date=fixedDate('2026-10-09T01:30:00Z');await r.nodes.limparFiltros.fire('click');assert.equal(r.nodes.dataFim.value,'2026-10-08');
+ const f=page('modulos/modulo-02-financeiro/index.html');await f.ready;f.sandbox.Date=fixedDate('2026-10-09T01:30:00Z');await financeAction(f,'3333','payment').fire('click');f.nodes.status.value='Pago';await f.nodes.status.fire('change');assert.match(f.nodes['resumo-operacao'].textContent,/08\/11\/2026/);
 });
 test('Relatórios exibem erro da API e não mostram dados anteriores como atuais',async()=>{
  const p=page('modulos/modulo-06-relatorios/index.html');await p.ready;

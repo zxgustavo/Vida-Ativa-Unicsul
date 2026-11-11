@@ -1,8 +1,8 @@
 'use strict';
 const assert=require('node:assert/strict');
 const Database=require('../backend/node_modules/better-sqlite3');
-const db=new Database(process.env.PAGAMENTO_TEST_DB || require('node:path').join(__dirname,'../backend/dev.db'));
-const api=(process.env.PAGAMENTO_TEST_URL || 'http://localhost:3333')+'/api';
+const db=new Database(process.env.TEST_DATABASE_PATH || process.env.PAGAMENTO_TEST_DB || require('node:path').join(__dirname,'../backend/dev.db'));
+const api=(process.env.TEST_API_URL || process.env.PAGAMENTO_TEST_URL || 'http://localhost:3333')+'/api';
 async function request(path,method='GET',body){const response=await fetch(api+path,{method,headers:{'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});return {status:response.status,body:await response.json()};}
 const shift=(date,days)=>{const d=new Date(date+'T00:00:00Z');d.setUTCDate(d.getUTCDate()+days);return d.toISOString().slice(0,10);};
 async function main(){
@@ -31,6 +31,6 @@ async function main(){
   const renovado=await criar('Vencido',shift(hoje,-30),shift(hoje,-1));assert.equal((await pagar(renovado,{dataFim:shift(hoje,30)})).situacao,'Vigente');
   const pendente=await criar('Vencido',shift(hoje,-1),shift(hoje,30));let r=await request('/financeiro/'+pendente.id,'PUT',{formaPagamento:'Boleto'});assert.equal(r.body.situacao,'Vencido');r=await request('/financeiro/'+pendente.id,'PUT',{statusPagamento:'Pendente'});assert.equal(r.body.situacao,'Vencido');
   console.log('Pagamento: reavaliação, limites de datas, cancelamento e resposta completa confirmados na API e no SQLite.');
- }finally{if(alunoId){db.prepare('DELETE FROM Contrato WHERE alunoId=?').run(alunoId);db.prepare('DELETE FROM Aluno WHERE id=?').run(alunoId);}db.close();}
+ }finally{if(alunoId){db.prepare('DELETE FROM Pagamento WHERE contratoId IN (SELECT id FROM Contrato WHERE alunoId=?)').run(alunoId);db.prepare('DELETE FROM Contrato WHERE alunoId=?').run(alunoId);db.prepare('DELETE FROM Aluno WHERE id=?').run(alunoId);}db.close();}
 }
 main().catch(e=>{console.error(e);process.exitCode=1;});

@@ -143,16 +143,16 @@ O `.env`, os bancos SQLite locais e `node_modules` são ignorados pelo Git.
 Ainda na pasta `backend`:
 
 ```bash
-npx prisma db push
-npx prisma generate
+npm run db:migrate
+npx prisma generate --config prisma7.config.ts
 ```
 
-Use `db push` nesta instalação do MVP para incluir o schema completo, inclusive `LogAcesso`. O histórico de migrações versionado ainda não contém a criação dessa tabela. A geração do cliente é uma etapa explícita necessária antes de executar o seed e a API.
+Use `db:migrate` para instalações novas e antigas: o comando cria um backup de bases existentes, reconhece o schema legado conhecido e aplica as migrações, inclusive `LogAcesso` e o histórico de recebimentos. Não substitua por `db push`, que não executa a recuperação dos pagamentos existentes. A geração do cliente continua sendo uma etapa explícita antes do seed e da API. Veja [regras, migração e validação dos relatórios](./docs/RELATORIOS.md).
 
 ### 5. Carregue os dados fictícios da apresentação
 
 ```bash
-npx prisma db seed
+npx prisma db seed --config prisma7.config.ts
 ```
 
 Em uma base nova, o seed cria **10 alunos, 10 contratos e 8 avaliações**, com situações variadas. Seus identificadores são fixos; ao executar novamente, o script atualiza plano e preço dos contratos fictícios, mas não renova automaticamente todas as datas e situações já existentes.
@@ -201,16 +201,22 @@ A liberação depende de cadastro ativo, contrato elegível na data atual e aus�
 
 ## Verificações
 
-Na raiz do projeto, execute a suíte de frontend:
+Na raiz do projeto, execute todas as suítes em um SQLite descartável (porta 3333 livre):
+
+```bash
+node tests/run-isolated.cjs
+```
+
+O executor migra uma base temporária, gera o Prisma Client, verifica TypeScript e inicia sua própria API. Os bancos existentes são preservados. Para executar apenas os testes de frontend com DOM e API simulados:
 
 ```bash
 node tests/front-end.test.cjs
 ```
 
-Com a API e o banco de demonstração preparados, execute a integração da Portaria:
+Para uma execução avulsa, direcione explicitamente a integração a uma API e base de testes:
 
 ```bash
-node tests/portaria-integration.test.cjs
+TEST_DATABASE_PATH=/caminho/testes.db TEST_API_URL=http://localhost:3333 node tests/portaria-integration.test.cjs
 ```
 
 Na verificação documentada em **08/11/2026**, passaram **91 de 91 cenários de frontend** e a integração da Portaria, incluindo logs, cooldown e oito consultas concorrentes com uma resposta 200 e sete respostas 429.
@@ -222,8 +228,8 @@ Os testes de integração criam e removem registros próprios; execute-os em uma
 | Tema | Comportamento atual |
 | --- | --- |
 | **Portaria** | Consulta o cadastro e a elegibilidade do contrato; registra a decisão no banco e aplica cooldown. Não verifica diretamente o pagamento nem aplica tolerância financeira |
-| **Pagamentos** | Registra forma, situação e data no contrato; não processa transações bancárias nem concilia recebimentos |
-| **Receita esperada** | Soma os valores integrais dos contratos vigentes; não representa caixa recebido, lucro ou receita mensal recorrente |
+| **Pagamentos** | Preserva recebimentos em histórico separado e mantém o estado atual no contrato; não processa transações bancárias nem concilia recebimentos |
+| **Receita esperada** | O valor dos contratos vigentes é um retrato atual. “Recebido no período” soma o histórico confirmado por data de pagamento, busca e situação atual do contrato |
 | **Liberação e Auditoria** | Módulo adicional com estado local de demonstração, ainda sem conexão com a decisão da Portaria real |
 | **Acesso por outros dispositivos** | A interface é responsiva, mas a API está configurada no frontend como `localhost:3333`; acesso pela rede exige configuração específica |
 | **Operação comercial** | Exige autenticação, permissões, backup e recuperação, configuração de infraestrutura e homologação das integrações necessárias |

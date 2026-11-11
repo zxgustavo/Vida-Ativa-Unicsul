@@ -72,6 +72,24 @@ model Contrato {
   dataPagamento     DateTime?
   criadoEm          DateTime @default(now())
   atualizadoEm      DateTime @updatedAt
+  pagamentos        Pagamento[]
 
   @@index([alunoId])
+}
+
+// Recebimentos imutáveis: os campos do contrato continuam sendo seu estado atual.
+model Pagamento {
+  id              String   @id @default(uuid())
+  contratoId      String
+  contrato        Contrato @relation(fields: [contratoId], references: [id], onDelete: Restrict)
+  chave           String   @unique
+  valorCentavos   Int
+  plano           String
+  formaPagamento  String
+  dataPagamento   String
+  origem          String   @default("Registro")
+  criadoEm        DateTime @default(now())
+
+  @@index([contratoId])
+  @@index([dataPagamento])
 }

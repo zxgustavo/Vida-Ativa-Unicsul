@@ -50,16 +50,16 @@ Os comandos abaixo usam PowerShell e criam o SQLite local na primeira execução
 3. Ainda na pasta `Vida-Ativa-Unicsul/backend`, crie o banco e gere o cliente Prisma:
 
    ```powershell
-   npx prisma db push
-   npx prisma generate
+   npm run db:migrate
+   npx prisma generate --config prisma7.config.ts
    ```
 
-   Use `db push` para incluir todos os modelos atuais, incluindo os logs de acesso; as migrações versionadas ainda não contemplam essa tabela.
+   Use `db:migrate` para aplicar as migrações com backup de bases existentes, incluindo logs de acesso e histórico de recebimentos. Veja [as regras e a migração dos relatórios](./docs/RELATORIOS.md).
 
 4. Ainda na pasta `backend`, para preencher a apresentação com dados fictícios, execute:
 
    ```powershell
-   npx prisma db seed
+   npx prisma db seed --config prisma7.config.ts
    ```
 
    O seed atualiza o plano e o preço dos contratos fictícios identificados pelo próprio script. O banco local e o arquivo `.env` não são versionados.

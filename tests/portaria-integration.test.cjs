@@ -1,6 +1,6 @@
 'use strict';
 const assert=require('node:assert/strict');const Database=require('../backend/node_modules/better-sqlite3');const {page}=require('./front-end.test.cjs');
-const db=new Database(process.env.PORTARIA_TEST_DB || require('node:path').join(__dirname,'../backend/dev.db')),api=(process.env.PORTARIA_TEST_URL || 'http://localhost:3333')+'/api';
+const db=new Database(process.env.TEST_DATABASE_PATH || process.env.PORTARIA_TEST_DB || require('node:path').join(__dirname,'../backend/dev.db')),api=(process.env.TEST_API_URL || process.env.PORTARIA_TEST_URL || 'http://localhost:3333')+'/api';
 async function request(path,method='GET',data){const response=await fetch(api+path,{method,headers:{'Content-Type':'application/json'},body:data===undefined?undefined:JSON.stringify(data)});return {status:response.status,body:await response.json(),headers:response.headers};}
 const shift=(date,days)=>{const d=new Date(date+'T00:00:00Z');d.setUTCDate(d.getUTCDate()+days);return d.toISOString().slice(0,10);};
 async function main(){let alunoId;try{
@@ -28,5 +28,5 @@ async function main(){let alunoId;try{
  assert.equal((await request('/alunos/'+alunoId,'DELETE')).status,200);await verificar('NEGADO');expirar();await p.nodes.formCatraca.fire('submit');assert.equal(p.nodes['status-title'].textContent,'Acesso NEGADO');
  const logs=await request('/portaria/logs');assert.equal(logs.status,200);assert.equal(logs.headers.get('cache-control'),'no-store');assert.equal(logs.body.length,10);assert.equal(logs.body[0].status,'Negado');assert.equal(logs.body[0].aluno.nome,'Aluno Portaria Teste');assert.match(p.nodes['logs-list'].textContent,/Aluno Portaria Teste/);assert.match(p.nodes['logs-list'].textContent,/Negado/);
  assert.equal((await request('/relatorios/dashboard')).status,200);assert.equal((await request('/financeiro')).status,200);console.log('Portaria: regras, persistência dos logs e interface verificadas com SQLite.');
- }finally{if(alunoId){db.prepare('DELETE FROM LogAcesso WHERE alunoId=?').run(alunoId);db.prepare('DELETE FROM Contrato WHERE alunoId=?').run(alunoId);db.prepare('DELETE FROM Aluno WHERE id=?').run(alunoId);}db.prepare('DELETE FROM LogAcesso WHERE matricula=? AND alunoId IS NULL').run('000000000000');db.close();}}
+ }finally{if(alunoId){db.prepare('DELETE FROM LogAcesso WHERE alunoId=?').run(alunoId);db.prepare('DELETE FROM Pagamento WHERE contratoId IN (SELECT id FROM Contrato WHERE alunoId=?)').run(alunoId);db.prepare('DELETE FROM Contrato WHERE alunoId=?').run(alunoId);db.prepare('DELETE FROM Aluno WHERE id=?').run(alunoId);}db.prepare('DELETE FROM LogAcesso WHERE matricula=? AND alunoId IS NULL').run('000000000000');db.close();}}
 main().catch(e=>{console.error(e);process.exitCode=1;});

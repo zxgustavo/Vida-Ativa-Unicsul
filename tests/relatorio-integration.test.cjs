@@ -3,8 +3,8 @@
 const assert=require('node:assert/strict');
 const Database=require('../backend/node_modules/better-sqlite3');
 const {page}=require('./front-end.test.cjs');
-const db=new Database(process.env.RELATORIO_TEST_DB || require('node:path').join(__dirname,'../backend/dev.db'));
-const api=(process.env.RELATORIO_TEST_URL || 'http://localhost:3333')+'/api';
+const db=new Database(process.env.TEST_DATABASE_PATH || process.env.RELATORIO_TEST_DB || require('node:path').join(__dirname,'../backend/dev.db'));
+const api=(process.env.TEST_API_URL || process.env.RELATORIO_TEST_URL || 'http://localhost:3333')+'/api';
 async function request(path,method='GET',data){const response=await fetch(api+path,{method,headers:{'Content-Type':'application/json'},body:data===undefined?undefined:JSON.stringify(data)});return {status:response.status,body:await response.json()};}
 const day=(value,n)=>{const d=new Date(value+'T00:00:00.000Z');d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10);};
 async function main(){
@@ -43,7 +43,7 @@ async function main(){
   p.nodes.dataInicio.value=today;p.nodes.dataFim.value=today;await p.nodes.formRelatorio.fire('submit');p.nodes.buscarAluno.value=token;await p.nodes.buscarAluno.fire('input');const beforeSearch=calls;await p.flush();await new Promise(resolve=>setTimeout(resolve,50));assert.ok(calls>beforeSearch);assert.match(p.nodes.tabelaCorpo.textContent,new RegExp(token));
   console.log('Relatórios: totais, vigência, contagem por aluno, filtros e atualização da tela confirmados no SQLite.');
  }finally{
-  const remove=db.transaction(()=>{for(const id of ids){db.prepare('DELETE FROM AvaliacaoFisica WHERE alunoId=?').run(id);db.prepare('DELETE FROM Contrato WHERE alunoId=?').run(id);db.prepare('DELETE FROM Aluno WHERE id=?').run(id);}});remove();db.close();
+  const remove=db.transaction(()=>{for(const id of ids){db.prepare('DELETE FROM AvaliacaoFisica WHERE alunoId=?').run(id);db.prepare('DELETE FROM Pagamento WHERE contratoId IN (SELECT id FROM Contrato WHERE alunoId=?)').run(id);db.prepare('DELETE FROM Contrato WHERE alunoId=?').run(id);db.prepare('DELETE FROM Aluno WHERE id=?').run(id);}});remove();db.close();
  }
 }
 main().catch(e=>{console.error(e);process.exitCode=1;});

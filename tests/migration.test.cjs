@@ -1,0 +1,20 @@
+'use strict';
+const assert=require('node:assert/strict'),fs=require('node:fs'),os=require('node:os'),path=require('node:path'),{spawnSync}=require('node:child_process');
+const Database=require('../backend/node_modules/better-sqlite3');
+const backend=path.resolve(__dirname,'../backend'),dir=fs.mkdtempSync(path.join(os.tmpdir(),'vida-ativa-migration-')),file=path.join(dir,'legacy.db');
+const db=new Database(file),migrations=path.join(backend,'prisma/migrations');
+for(const name of fs.readdirSync(migrations).filter(n=>n<'20261111160000').sort())if(fs.existsSync(path.join(migrations,name,'migration.sql')))db.exec(fs.readFileSync(path.join(migrations,name,'migration.sql'),'utf8'));
+db.prepare('INSERT INTO Aluno (id,nome,cpf,matricula,criadoEm,atualizadoEm) VALUES (?,?,?,?,?,?)').run('a','Aluno Legado','52998224725','123456','2025-01-01','2025-01-01');
+for(const [id,status,date]of[['pago','Pago','2026-10-06T00:00:00.000Z'],['pendente','Pendente',null],['sem-data','Pago',null]])db.prepare('INSERT INTO Contrato (id,alunoId,plano,valor,dataInicio,dataFim,situacao,statusPagamento,dataPagamento,atualizadoEm) VALUES (?,?,?,?,?,?,?,?,?,?)').run(id,'a','Mensal',120.15,'2025-01-01','2027-01-01','Ativo',status,date,'2026-01-01');
+const logDDL=fs.readFileSync(path.join(migrations,'20261111160000_historico_pagamentos/migration.sql'),'utf8').split('CREATE TABLE "Pagamento"')[0];
+db.exec(logDDL+'COMMIT;');
+db.prepare('INSERT INTO LogAcesso (id,matricula,alunoId,status,motivo) VALUES (?,?,?,?,?)').run('log-legado','123456','a','Liberado','Registro preservado');
+const snapshot=()=>JSON.stringify(['Aluno','Contrato','AvaliacaoFisica','LogAcesso'].map(table=>db.prepare('SELECT * FROM '+table+' ORDER BY id').all()));
+const before=snapshot();
+function migrate(){const result=spawnSync(process.execPath,['scripts/migrate.cjs'],{cwd:backend,env:{...process.env,DATABASE_URL:'file:'+file},encoding:'utf8'});assert.equal(result.status,0,result.stdout+result.stderr);}
+migrate();assert.equal(snapshot(),before);assert.equal(db.prepare('SELECT COUNT(*) AS n FROM Pagamento').get().n,1);
+const receipt=db.prepare('SELECT * FROM Pagamento').get();assert.equal(receipt.valorCentavos,12015);assert.equal(receipt.dataPagamento,'2026-10-06T00:00:00.000Z');assert.equal(receipt.origem,'Legado');
+assert.ok(db.prepare("SELECT name FROM sqlite_master WHERE name='LogAcesso'").get());
+migrate();assert.equal(snapshot(),before);assert.equal(db.prepare('SELECT COUNT(*) AS n FROM Pagamento').get().n,1);assert.equal(db.pragma('foreign_key_check').length,0);
+assert.ok(fs.readdirSync(dir).some(n=>n.startsWith('legacy.db.backup-')));db.close();
+console.log('Migração real: base legada preservada, backup, LogAcesso, recuperação apenas do último pago com data e reaplicação sem duplicar.');
