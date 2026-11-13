@@ -21,7 +21,7 @@ async function main(){
   assert.equal((await request('/avaliacoes','POST',{...valid,dataAvaliacao:'1989-12-31'})).status,400);
   assert.equal((await request('/avaliacoes','POST',{...valid,dataReavaliacao:'2026-10-01'})).status,400);
   assert.equal(db.prepare('SELECT COUNT(*) AS n FROM AvaliacaoFisica WHERE alunoId=?').get(alunoId).n,0);
-  const p=page('modulos/modulo-05-avaliacao/index.html',new Map(),fetch);
+  const p=page('modulos/modulo-05-avaliacao/index.html',new Map(),(url,options)=>fetch(String(url).replace('http://localhost:3333/api',api),options));
   await waitFor(()=>!p.nodes['historico-feedback'].textContent&&p.nodes.historico.textContent.includes('Nenhuma'));
   // Aguardar alunos sem depender de IDs ou de outros registros existentes.
   let option;for(let i=0;i<100&&!option;i++){p.nodes.alunoBusca.value=aluno.matricula;await p.nodes.alunoBusca.fire('input');option=p.nodes.alunoResultados.querySelectorAll('.student-search-option').find(n=>n.textContent.includes(aluno.matricula));if(!option)await new Promise(resolve=>setTimeout(resolve,30));}
@@ -35,7 +35,7 @@ async function main(){
   result=await request('/avaliacoes/'+row.id,'PUT',{peso:350,altura:250,percentualGordura:70});assert.equal(result.status,200);
   result=await request('/avaliacoes','POST',{...valid,peso:20,altura:50,percentualGordura:2});assert.equal(result.status,201);
   const second=result.body.id;result=await request('/avaliacoes','POST',{...valid,percentualGordura:null,dataReavaliacao:null});assert.equal(result.status,201);assert.equal(result.body.percentualGordura,null);
-  const p2=page('modulos/modulo-05-avaliacao/index.html',new Map(),fetch);p2.nodes.filtroAluno.value=aluno.matricula;await p2.nodes.filtroAluno.fire('input');await waitFor(()=>p2.nodes.historico.textContent.includes('Integração Avaliação Teste'));assert.match(p2.nodes.historico.textContent,/350 kg/);
+  const p2=page('modulos/modulo-05-avaliacao/index.html',new Map(),(url,options)=>fetch(String(url).replace('http://localhost:3333/api',api),options));p2.nodes.filtroAluno.value=aluno.matricula;await p2.nodes.filtroAluno.fire('input');await waitFor(()=>p2.nodes.historico.textContent.includes('Integração Avaliação Teste'));assert.match(p2.nodes.historico.textContent,/350 kg/);
   result=await request('/avaliacoes/'+second,'DELETE');assert.equal(result.status,200);assert.equal((await request('/avaliacoes/'+second)).status,404);
   assert.equal((await request('/avaliacoes/inexistente','PUT',{peso:60})).status,404);
   console.log('Avaliações: formulário, histórico, limites inclusivos, rejeição de dados inválidos e CRUD confirmados no SQLite.');

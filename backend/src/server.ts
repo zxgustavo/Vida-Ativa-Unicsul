@@ -6,6 +6,7 @@ import { contratoRoutes } from "./routes/contratoRoutes";
 import { avaliacaoRoutes } from "./routes/avaliacaoRoutes";
 import { relatorioRoutes } from "./routes/relatorioRoutes";
 import { portariaRoutes } from "./routes/portariaRoutes";
+import { liberacaoRoutes } from "./routes/liberacaoRoutes";
 import { ErroAplicacao } from "./services/alunoService";
 
 const app = express();
@@ -17,6 +18,7 @@ app.use("/api/financeiro", contratoRoutes);
 app.use("/api/avaliacoes", avaliacaoRoutes);
 app.use("/api/relatorios", relatorioRoutes);
 app.use("/api/portaria", portariaRoutes);
+app.use("/api/liberacoes", liberacaoRoutes);
 
 const tratarErro: ErrorRequestHandler = (erro, _req, res, _next) => {
   if (erro instanceof ErroAplicacao) {

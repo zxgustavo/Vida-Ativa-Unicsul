@@ -22,11 +22,11 @@ memória ou alteração manual de números/textos da página.
 | --- | --- | --- |
 | Recebido no período | Soma em centavos dos recebimentos confirmados no histórico, inclusive de alunos cadastrados antes do intervalo | Data do pagamento, nome/CPF/matrícula e situação **atual** do contrato |
 | Detalhamento dos recebimentos | Uma linha por recebimento; plano, forma e valor preservados no registro. Total inclui todas as páginas, não só a página visível | Os mesmos do recebido |
-| Alunos cadastrados / ativos | Total atual de cadastros / cadastros ativos | Nenhum |
-| Valor dos contratos vigentes | Soma dos valores integrais dos contratos vigentes hoje; não é caixa, mensalidade recorrente ou dinheiro recebido | Nenhum |
-| Alunos com contrato vencido / a iniciar | Alunos distintos com pelo menos um contrato nessa situação hoje | Nenhum |
-| Avaliações no mês | Avaliações com data civil no mês atual de São Paulo | Nenhum filtro do formulário |
-| Avaliações no período | Avaliações com data civil no intervalo selecionado | Apenas datas |
+| Alunos cadastrados / ativos | Cadastros / cadastros ativos da lista filtrada | Data de cadastro, busca e situação atual |
+| Valor dos contratos vigentes | Soma dos valores integrais dos contratos vigentes da lista filtrada; não é dinheiro recebido | Data de cadastro, busca e situação atual |
+| Alunos com contrato vencido / a iniciar | Alunos distintos da lista filtrada com contrato nessa situação hoje | Data de cadastro, busca e situação atual |
+| Avaliações no mês | Avaliações dos alunos filtrados, no mês atual e no intervalo selecionado | Data de cadastro, busca, situação e data da avaliação |
+| Avaliações no período | Avaliações dos alunos filtrados com data civil no intervalo selecionado | Data de cadastro, busca, situação e data da avaliação |
 | Cadastros no período e contratos | Data de cadastro do aluno em São Paulo; pode conter uma linha por contrato | Datas de cadastro, busca e situação atual |
 
 As datas inicial e final são inclusivas. Datas civis `AAAA-MM-DD` não sofrem

@@ -14,7 +14,7 @@ async function main(){
   for(let i=0;i<10;i++){const cpf=String(Math.floor(Math.random()*1e11)).padStart(11,'0');const result=await request('/alunos','POST',{nome:'Integração Financeiro Teste',cpf});if(result.status===201){aluno=result.body;break;}}
   assert.ok(aluno,'Aluno de teste criado');alunoId=aluno.id;
   const invalid=await request('/financeiro','POST',{alunoId:'inexistente',plano:'Mensal',valor:120,dataInicio:'2026-10-08',dataFim:'2026-11-08',situacao:'Vigente'});assert.equal(invalid.status,404);
-  const calls=[];const p=page('modulos/modulo-02-financeiro/index.html',new Map(),(url,options={})=>{calls.push({url:String(url),method:options.method||'GET'});return fetch(url,options);});
+  const calls=[];const p=page('modulos/modulo-02-financeiro/index.html',new Map(),(url,options={})=>{calls.push({url:String(url),method:options.method||'GET'});return fetch(String(url).replace("http://localhost:3333/api",api),options);});
   p.nodes.busca.value=aluno.matricula;await p.nodes.busca.fire('input');await waitFor(()=>p.nodes.tabelaDados.textContent.includes('Integração Financeiro Teste'));
   await p.nodes['novo-contrato'].fire('click');p.nodes.alunoBusca.value=aluno.matricula;await p.nodes.alunoBusca.fire('input');
   const choice=p.nodes.alunoResultados.querySelectorAll('.student-search-option').find(n=>n.textContent.includes(aluno.matricula));assert.ok(choice);await choice.fire('click');
@@ -28,11 +28,11 @@ async function main(){
   previous=countGets();let pending=p.nodes.suspender.fire('click');await answerDialog(p,true);await pending;assert.ok(countGets()>previous);assert.equal(db.prepare('SELECT situacao FROM Contrato WHERE id = ?').get(row.id).situacao,'Suspenso');assert.match(p.nodes.tabelaDados.textContent,/Suspenso/);
   pending=p.nodes.suspender.fire('click');await answerDialog(p,true);await pending;assert.equal(db.prepare('SELECT situacao FROM Contrato WHERE id = ?').get(row.id).situacao,'Ativo');
   const second=await request('/financeiro','POST',{alunoId,plano:'Anual',valor:1152,dataInicio:'2026-10-08',dataFim:'2027-10-08',situacao:'Vigente'});assert.equal(second.status,201);
-  const p2=page('modulos/modulo-02-financeiro/index.html',new Map(),fetch);p2.nodes.busca.value=aluno.matricula;await p2.nodes.busca.fire('input');await waitFor(()=>p2.nodes.tabelaDados.children.filter(n=>n.getAttribute('data-student-id')===alunoId).length===2);
+  const p2=page('modulos/modulo-02-financeiro/index.html',new Map(),(url,options)=>fetch(String(url).replace('http://localhost:3333/api',api),options));p2.nodes.busca.value=aluno.matricula;await p2.nodes.busca.fire('input');await waitFor(()=>p2.nodes.tabelaDados.children.filter(n=>n.getAttribute('data-student-id')===alunoId).length===2);
   const cancel=await request('/financeiro/'+second.body.id,'DELETE');assert.equal(cancel.status,200);assert.equal(db.prepare('SELECT situacao FROM Contrato WHERE id = ?').get(second.body.id).situacao,'Cancelado');
   const missing=await request('/financeiro/id-inexistente','PUT',{situacao:'Cancelado'});assert.equal(missing.status,404);
   assert.equal((await request('/alunos/'+alunoId,'DELETE')).status,200);
-  const filteredCalls=[];const p3=page('modulos/modulo-02-financeiro/index.html',new Map(),(url,options={})=>{filteredCalls.push(String(url));return fetch(url,options);});
+  const filteredCalls=[];const p3=page('modulos/modulo-02-financeiro/index.html',new Map(),(url,options={})=>{filteredCalls.push(String(url));return fetch(String(url).replace("http://localhost:3333/api",api),options);});
   assert.equal(p3.nodes['status-aluno'].value,'ativos');p3.nodes.busca.value=aluno.matricula;await p3.nodes.busca.fire('input');p3.nodes['status-aluno'].value='inativos';await p3.nodes['status-aluno'].fire('change');
   await waitFor(()=>p3.nodes.tabelaDados.children.some(n=>n.getAttribute('data-student-id')===alunoId));const callsAfterLoad=filteredCalls.length;
   p3.nodes['status-aluno'].value='ativos';await p3.nodes['status-aluno'].fire('change');assert.equal(p3.nodes.tabelaDados.children.some(n=>n.getAttribute('data-student-id')===alunoId),false);

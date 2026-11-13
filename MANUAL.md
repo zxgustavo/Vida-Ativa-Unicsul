@@ -103,3 +103,13 @@ As tabelas de Cadastros, Financeiro, Auditoria, Avaliação e Relatórios exibem
 Na raiz, execute `node tests/front-end.test.cjs`. Os testes de integração em `tests/*-integration.test.cjs` e `tests/contrato-pagamento.test.cjs` exigem a API ligada na porta 3333; eles criam e removem registros próprios no SQLite local e devem ser executados sequencialmente.
 
 Para verificar a renovação sem uma API ligada, após instalar as dependências do backend, execute `node --test tests/contrato-renovacao.test.cjs`. A suíte executa o serviço real com repositórios em memória e testa também a atualização da tela; ela não substitui a integração com Prisma/SQLite. O teste `contrato-pagamento.test.cjs` aceita `PAGAMENTO_TEST_URL` e `PAGAMENTO_TEST_DB` para apontar a uma API e base descartáveis.
+
+## Liberação e Auditoria: aluno ou outra pessoa
+
+Em **Pessoa autorizada**, escolha **Aluno** para buscar um cadastro ativo por nome, CPF ou matrícula, ou **Outra pessoa** para informar nome e CPF de visitante, funcionário ou prestador de serviço. Nome, CPF válido, tipo de acesso, prazo e justificativa são obrigatórios conforme a opção escolhida.
+
+As novas autorizações são gravadas no SQLite por `POST /api/liberacoes` e consultadas por `GET /api/liberacoes`. Nome, CPF e matrícula do aluno ficam preservados como estavam na autorização. O responsável é identificado como **Administração (login simulado)**; horário e validade são definidos pelo backend. Registros antigos do navegador continuam visíveis, identificados como anteriores, sem migração automática para o banco.
+
+Nesta etapa, a autorização é um registro para conferência manual: não altera a validação da Portaria, que continua por matrícula e contrato. A entrada de visitantes e a marcação de utilização pela Portaria ficam para uma etapa futura.
+
+Ao atualizar outra máquina, pare a API e execute `npm run db:migrate` e `npx prisma generate --config prisma7.config.ts` dentro de `backend/`, e reinicie o backend.

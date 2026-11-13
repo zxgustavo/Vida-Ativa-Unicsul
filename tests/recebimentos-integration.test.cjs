@@ -20,7 +20,7 @@ async function main(){
   async function report(from,to=from,extra=''){const r=await request('/relatorios/dashboard?dataInicio='+from+'&dataFim='+to+'&busca='+aluno.matricula+extra);assert.equal(r.status,200,JSON.stringify(r.body));assert.equal(r.body.totais.recebidoCentavos,r.body.pagamentos.reduce((sum,p)=>sum+p.valorCentavos,0));return r.body;}
   let r=await report('2026-10-06');assert.equal(r.totais.recebidoCentavos,44430);assert.equal(r.pagamentos.length,2);assert.equal(r.alunos.length,0,'Cadastro anterior não impede o recebimento de aparecer.');
   assert.equal((await report('2026-10-07')).totais.recebidoCentavos,5000);
-  r=await report('2026-10-08');assert.equal(r.totais.recebidoCentavos,0);assert.equal(r.pagamentos.length,0);assert.ok(r.totais.alunos>0,'Totais gerais não são zerados sem pagamentos.');
+  r=await report('2026-10-08');assert.equal(r.totais.recebidoCentavos,0);assert.equal(r.pagamentos.length,0);assert.equal(r.totais.alunos,0,'Indicadores de cadastro seguem o período, independentemente dos recebimentos.');
   assert.equal((await report('2026-10-06','2026-10-07')).totais.recebidoCentavos,49430);
   for(const busca of ['recebimentos ana','168.995.350-09',aluno.matricula]){const result=await request('/relatorios/dashboard?dataInicio=2026-10-06&dataFim=2026-10-06&situacao=Vigente&busca='+encodeURIComponent(busca));assert.equal(result.body.totais.recebidoCentavos,44430);}
   assert.equal((await report('2026-10-06','2026-10-06','&situacao=Vencido')).totais.recebidoCentavos,0);

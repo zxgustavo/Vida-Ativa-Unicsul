@@ -103,7 +103,10 @@ function page(file,storage=new Map(),fetchOverride,sessionProfile='admin',sessio
   apiCalls.push({url,method:options.method||'GET'});const params=new URL(String(url)).searchParams;
   const alunos=[{id:'1111',nome:'Lucas Andrade',matricula:'1111',cpf:'52998224725',dataCadastro:'2026-10-05',ativo:true,contratos:[{id:'c-1111',plano:'Mensal',valor:120,situacaoAtual:'Vigente'}]}];
   const matches=alunos.filter(a=>a.dataCadastro>=params.get('dataInicio')&&a.dataCadastro<=params.get('dataFim')&&(!params.get('busca')||a.nome.toLowerCase().includes(params.get('busca').toLowerCase())||a.matricula.includes(params.get('busca')))&&(params.get('situacao')==='todos'||a.contratos.some(c=>c.situacaoAtual===params.get('situacao'))));
-  return {ok:true,status:200,json:async()=>({periodo:{dataInicio:params.get('dataInicio'),dataFim:params.get('dataFim')},pagamentos:[],totais:{recebidoCentavos:0,alunos:3,alunosAtivos:2,receitaPrevista:120,avaliacoesMes:1,avaliacoesPeriodo:params.get('dataInicio').startsWith('2099')?0:1,alunosVencidos:1,alunosAIniciar:0},alunos:matches})};
+  return {ok:true,status:200,json:async()=>({periodo:{dataInicio:params.get('dataInicio'),dataFim:params.get('dataFim')},pagamentos:[],totais:{recebidoCentavos:0,alunos:matches.length,alunosAtivos:matches.length,receitaPrevista:matches.length*120,avaliacoesMes:matches.length,avaliacoesPeriodo:matches.length,alunosVencidos:0,alunosAIniciar:0},alunos:matches})};
+ };
+ if(file==='modulos/modulo-04-auditoria/index.html')sandbox.fetch=async(url,options={})=>{
+  apiCalls.push({url,method:options.method||'GET'});return {ok:true,status:200,json:async()=>String(url).endsWith('/alunos')?D.getState().students.map(s=>({id:s.id,nome:s.name,cpf:s.cpf,matricula:s.id,ativo:s.active!==false})):[]};
  };
  if(file==='modulos/modulo-03-portaria/index.html')sandbox.fetch=async(url)=>{
   if(String(url).endsWith('/logs')){apiCalls.push({url,method:'GET'});return {ok:true,status:200,json:async()=>([])};}
@@ -506,7 +509,7 @@ test('Novo contrato oferece plano mensal e só revela os campos após selecionar
 });
 
 test('Relatórios enviam filtros e limpar volta a consultar a API',async()=>{
- const p=page('modulos/modulo-06-relatorios/index.html');await p.ready;assert.equal(p.nodes['total-alunos'].textContent,'3');assert.match(p.nodes.tabelaCorpo.textContent,/Lucas Andrade/);
+ const p=page('modulos/modulo-06-relatorios/index.html');await p.ready;assert.equal(p.nodes['total-alunos'].textContent,'1');assert.match(p.nodes.tabelaCorpo.textContent,/Lucas Andrade/);
  p.nodes.status.value='Vencido';await p.nodes.formRelatorio.fire('submit');assert.match(p.apiCalls.at(-1).url,/situacao=Vencido/);assert.match(p.nodes.tabelaCorpo.textContent,/Nenhum aluno/);
  const count=p.apiCalls.length;await p.nodes.limparFiltros.fire('click');assert.equal(p.apiCalls.length,count+1);assert.equal(p.nodes.status.value,'todos');assert.match(p.nodes.tabelaCorpo.textContent,/Lucas Andrade/);
  p.nodes.dataInicio.value='2026-11-02';p.nodes.dataFim.value='2026-11-01';await p.nodes.formRelatorio.fire('submit');assert.match(p.nodes.feedback.textContent,/período válido/);assert.equal(p.nodes['total-alunos'].textContent,'—');

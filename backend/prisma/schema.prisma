@@ -25,6 +25,27 @@ model Aluno {
   contratos          Contrato[]
   avaliacoes         AvaliacaoFisica[]
   logsAcesso         LogAcesso[]
+  liberacoes         Liberacao[]
+}
+
+model Liberacao {
+  id            String   @id @default(uuid())
+  tipoPessoa    String
+  alunoId       String?
+  aluno         Aluno?   @relation(fields: [alunoId], references: [id], onDelete: SetNull)
+  nome          String
+  cpf           String
+  matricula     String?
+  tipoAcesso    String
+  justificativa String
+  responsavel   String
+  criadoEm      DateTime @default(now())
+  expiraEm      DateTime
+  utilizadaEm   DateTime?
+
+  @@index([criadoEm])
+  @@index([alunoId])
+  @@index([cpf])
 }
 
 model LogAcesso {
