@@ -26,6 +26,14 @@ Este repositório entrega um **MVP funcional para demonstração e avaliação**
 
 > **Do atendimento à gestão:** um mesmo cadastro conecta os módulos. Criar um aluno não gera automaticamente contrato ou cobrança; cada operação possui seu próprio fluxo de conferência.
 
+## Modelo relacional
+
+O **Aluno** se relaciona com contratos, avaliações físicas, logs de acesso e liberações. Cada **Contrato** pode registrar vários **Pagamentos**. Os vínculos de logs e liberações com o aluno são opcionais, permitindo registrar tentativas desconhecidas e pessoas externas.
+
+![Diagrama das seis tabelas de negócio e suas cinco relações](./docs/prints/modelo-relacional.png)
+
+[Abrir o diagrama vetorial em tamanho completo](./docs/prints/modelo-relacional.svg) · [Consultar o schema Prisma](./backend/prisma/schema.prisma)
+
 <details>
 <summary><strong>Veja o dashboard em funcionamento</strong></summary>
 
