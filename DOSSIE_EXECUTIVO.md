@@ -192,7 +192,7 @@ Para uma apresentação no ambiente padrão do projeto:
 | --- | --- | --- |
 | API | Na pasta `backend`, executar `npm run dev` | `http://localhost:3333` |
 | Interface | Na raiz, executar `node iniciar-preview.cjs` | `http://127.0.0.1:8765/` |
-| Preparação inicial | Instalar dependências, configurar o banco e executar o seed conforme o manual | [`MANUAL.md`](./MANUAL.md) |
+| Preparação inicial | Instalar dependências, configurar o banco e executar o seed conforme o Quick Start | [Quick Start](./README.md#quick-start) |
 
 O frontend atualmente aponta para `localhost:3333`. Em outro dispositivo, `localhost` se refere ao próprio dispositivo. Portanto, disponibilizar o sistema ao smartphone do personal exige configurar corretamente o endereço da API e a rede. **Responsividade visual e disponibilidade em rede são requisitos diferentes.**
 
@@ -537,7 +537,7 @@ A captura mostra o formulário e **oito avaliações fictícias** no histórico.
 | Avaliação física | 1 minuto | Mostre CPF, medidas, busca e previsão de reavaliação |
 | Próximo passo | 30 segundos | Proponha validar a rotina da academia e dimensionar a preparação do piloto |
 
-No login administrativo atual, a primeira tela indicada pelo fluxo de entrada é Cadastros; selecione **Relatórios Gerenciais** no menu para seguir esse roteiro. A Portaria possui um perfil de demonstração próprio. As credenciais e a preparação do ambiente estão no [`Manual Operacional`](./MANUAL.md).
+No login administrativo atual, a primeira tela indicada pelo fluxo de entrada é Cadastros; selecione **Relatórios Gerenciais** no menu para seguir esse roteiro. A Portaria possui um perfil de demonstração próprio. As credenciais e a preparação do ambiente estão no [`README`](./README.md).
 
 **Prepare antes de apresentar:** confirme que a API responde, que a base é de demonstração, que a matrícula escolhida tem contrato elegível na data atual e que o cooldown expirou. Tenha este dossiê disponível para explicar os estados capturados caso não seja conveniente aguardar a janela durante a reunião.
 
@@ -587,7 +587,7 @@ O teste de Portaria foi direcionado ao ambiente temporário pelas variáveis `PO
 
 | Tema | Onde consultar |
 | --- | --- |
-| Preparação do ambiente | [`MANUAL.md`](./MANUAL.md) |
+| Preparação do ambiente | [Quick Start](./README.md#quick-start) |
 | Visão do repositório | [`README.md`](./README.md) |
 | Modelo de dados e relacionamentos | [`backend/prisma/schema.prisma`](./backend/prisma/schema.prisma) |
 | Regras da Portaria | [`backend/src/services/portariaService.ts`](./backend/src/services/portariaService.ts) |

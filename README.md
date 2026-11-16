@@ -12,7 +12,7 @@ O Vida Ativa moderniza a rotina da academia ao transformar informações dispers
 
 Este repositório entrega um **MVP funcional para demonstração e avaliação**, com frontend conectado a uma API e dados persistidos em SQLite.
 
-[Quick Start](#quick-start) · [Credenciais](#acesso-e-credenciais) · [Dossiê executivo](./DOSSIE_EXECUTIVO.md) · [Manual operacional](./MANUAL.md)
+[Quick Start](#quick-start) · [Credenciais](#acesso-e-credenciais) · [Dossiê executivo](./DOSSIE_EXECUTIVO.md)
 
 ## O que o sistema entrega
 
@@ -247,7 +247,6 @@ Os testes de integração criam e removem registros próprios; execute-os em uma
 | Material | Conteúdo |
 | --- | --- |
 | [Dossiê executivo e técnico](./DOSSIE_EXECUTIVO.md) | Proposta de valor, engenharia, limites do MVP, falas de apresentação e guia visual |
-| [Manual operacional](./MANUAL.md) | Preparação do ambiente e orientações de demonstração |
 | [Capturas da aplicação](./docs/prints/) | Seis imagens reais, produzidas com dados fictícios e backend isolado |
 | [Modelo de dados](./backend/prisma/schema.prisma) | Entidades, vínculos e restrições persistentes |
 | [Testes](./tests/) | Cenários de frontend e integração |
